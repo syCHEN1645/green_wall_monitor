@@ -1,5 +1,10 @@
+// WiFi configuration
+#define WIFI_SSID "csy"
+#define WIFI_PASSWORD "55555555"
+#define WIFI_MAX_RETRY 5
+
 // mqtt broker configuration
-#define MQTT_BROKER_URL "8d63bda53c1747e293147012b1f1012f.s1.eu.hivemq.cloud:8883"
+#define MQTT_BROKER_URL "mqtts://8d63bda53c1747e293147012b1f1012f.s1.eu.hivemq.cloud:8883"
 #define MQTT_BROKER_PORT 8883
 #define MQTT_USERNAME "greenwall"
 #define MQTT_PASSWORD "Greenwall123"

@@ -14,10 +14,13 @@
 #include "SensorDevice.hpp"
 #include "DS18B20Device.hpp"
 #include "SEN0385Device.hpp"
+#include "WiFiManager.hpp"
 #include "MqttPublisher.hpp"
 #include "config.h"
 
-MqttPublisher mqttPub;
+// use smart pointers as placeholder to prevent startup order issues
+std::unique_ptr<WiFiManager> wifiManager;
+std::unique_ptr<MqttPublisher> mqttPub;
 
 std::vector<std::unique_ptr<SensorDevice>> sensors;
 
@@ -42,12 +45,15 @@ void initialiseSensor() {
 }
 
 void initialiseWiFi() {
-    return;
+    wifiManager = std::make_unique<WiFiManager>();
+    wifiManager->setupWiFi();
+    wifiManager->connect(WIFI_SSID, WIFI_PASSWORD);
+    wifiManager->waitForConnection();
 }
 
 void initialiseMqtt() {
     // mqtt client
-    mqttPub = MqttPublisher();
+    mqttPub = std::make_unique<MqttPublisher>();
 }
 
 void sensor_task(void *pvParameters) {
@@ -56,7 +62,7 @@ void sensor_task(void *pvParameters) {
             std::vector<float> readings = s->getReadingOnce();
             for (size_t i = 0; i < readings.size(); i++) {
                 printf("Reading %zu: %.2f\n", i, readings[i]);
-                mqttPub.publish("topic", (std::to_string(readings[i])).c_str(), 0, 0);
+                mqttPub->publish("topic", (std::to_string(readings[i])).c_str(), 0, 0);
             }
         }
         vTaskDelay(pdMS_TO_TICKS(DATA_PUBLISH_INTERVAL_FAST_S * 1000));
@@ -75,6 +81,7 @@ extern "C" void app_main(void) {
     // 2. Network / SNTP Initialization (Equivalent to your setup())
     // Note: You'll need a standard Wi-Fi helper here 
     initialiseWiFi();
+    vTaskDelay(pdMS_TO_TICKS(1000)); // Wait a bit for Wi-Fi to stabilize
     initialiseMqtt();
     initialiseSensor();
     
