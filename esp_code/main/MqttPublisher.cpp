@@ -2,11 +2,11 @@
 #include "config.h"
 
 MqttPublisher::MqttPublisher() {
-    esp_mqtt_client_config_t mqtt_cfg = {
-        .broker.address.uri = MQTT_BROKER_URL,
-    };
+    esp_mqtt_client_config_t mqtt_cfg = {};
+
+    mqtt_cfg.broker.address.uri = MQTT_BROKER_URL;
     client = esp_mqtt_client_init(&mqtt_cfg);
-    esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
+    esp_mqtt_client_register_event(client, static_cast<esp_mqtt_event_id_t>(ESP_EVENT_ANY_ID), mqtt_event_handler, NULL);
     esp_mqtt_client_start(client);
 }
 
@@ -19,9 +19,9 @@ void MqttPublisher::mqtt_event_handler(void *handler_args, esp_event_base_t base
     // Handle MQTT events here (connected, disconnected, published, etc.)
     // This is a static method, so it doesn't have access to instance members.
     // You can use handler_args to pass instance-specific data if needed.
-    mqtt_event_handler *event = (mqtt_event_handler *)event_data;
+    // esp_mqtt_event_handle_t *event = (esp_mqtt_event_handle_t *)event_data;
 
-    switch ((mqtt_event_handler_event_id_t)event_id) {
+    switch ((esp_mqtt_event_id_t)event_id) {
         case MQTT_EVENT_CONNECTED:
             printf("MQTT Connected\n");
             break;
@@ -32,7 +32,7 @@ void MqttPublisher::mqtt_event_handler(void *handler_args, esp_event_base_t base
             printf("MQTT Published\n");
             break;
         default:
-            printf("MQTT Event: %d\n", mqtt_event_handler_event_id);
+            printf("MQTT Event: %ld\n", event_id);
             break;
     }
 }

@@ -1,6 +1,9 @@
 .vscode/
 sdkconfig
 
+esp_code/managed_components/
+esp_code/build/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

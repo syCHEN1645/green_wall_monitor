@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+#include <vector>
+#include <memory>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_wifi.h"
@@ -7,25 +9,27 @@
 #include "nvs_flash.h"
 #include "esp_sntp.h"
 
+#include "SensorDevice.hpp"
 #include "DS18B20Device.hpp"
+#include "SEN0385Device.hpp"
 #include "MqttPublisher.hpp"
 #include "config.h"
 
-// in future change to other data structure for easier add and remove sensors
-List<DS18B20Device> sensors;
 MqttPublisher mqttPub;
 
-void initialiseSensor()
-{
-    // group green wall
-    DS18B20Device wallGreen("wall_green");
-    wallGreen.setupSensor(32);
-    sensors.push_back(wallGreen);
+std::vector<std::unique_ptr<SensorDevice>> sensors;
 
-    // group control wall
-    DS18B20Device wallControl("wall_control");
-    sensors.push_back(wallControl);
-    wallControl.setupSensor(33);
+void initialiseSensor() {
+    // Use make_unique to manage memory automatically
+    auto sensor_1 = std::make_unique<SEN0385Device>("wall_green");
+    int args_1[] = {CONFIG_SEN0385_SDA_PIN, CONFIG_SEN0385_SCL_PIN};
+    sensor_1->setupSensor(args_1);
+    sensors.push_back(std::move(sensor_1));
+
+    auto sensor_2 = std::make_unique<DS18B20Device>("wall_control");
+    int args_2[] = {CONFIG_DS18B20_PIN};
+    sensor_2->setupSensor(args_2);
+    sensors.push_back(std::move(sensor_2));
 }
 
 void initialiseWiFi() {
@@ -39,14 +43,14 @@ void initialiseMqtt() {
 
 void sensor_task(void *pvParameters) {
     while (1) {
-        float t1 = sensors[0].getTemperature();
-        float t2 = sensors[1].getTemperature();
-        
-        // publish to mqtt here, decide topic and payload format later
-        printf("Green Wall: %.2f, Control Wall: %.2f\n", t1, t2);
-        mqttPub.publish("green_wall/temperature", (std::to_string(t1) + "," + std::to_string(t2)).c_str(), 0, 0);
-
-        vTaskDelay(pdMS_TO_TICKS(DATA_PUBLISH_INTERVAL_NORMAL_S * 1000)); 
+        for (auto& s : sensors) {
+            std::vector<float> readings = s->getReadingOnce();
+            for (size_t i = 0; i < readings.size(); i++) {
+                printf("Reading %zu: %.2f\n", i, readings[i]);
+                mqttPub.publish("topic", (std::to_string(readings[i])).c_str(), 0, 0);
+            }
+        }
+        vTaskDelay(pdMS_TO_TICKS(DATA_PUBLISH_INTERVAL_FAST_S * 1000));
     }
 }
 
