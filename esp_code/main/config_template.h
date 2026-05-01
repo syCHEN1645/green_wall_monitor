@@ -1,8 +1,8 @@
 // mqtt broker configuration
-#define MQTT_BROKER_URL "8d63bda53c1747e293147012b1f1012f.s1.eu.hivemq.cloud:8883"
-#define MQTT_BROKER_PORT 8883
-#define MQTT_USERNAME "greenwall"
-#define MQTT_PASSWORD "Greenwall123"
+#define MQTT_BROKER_URL "mqtt://your_broker_url"
+#define MQTT_BROKER_PORT 1883
+#define MQTT_USERNAME "your_username"
+#define MQTT_PASSWORD "your_password"
 
 // sensor task configuration
 #define DATA_PUBLISH_INTERVAL_NORMAL_S 60

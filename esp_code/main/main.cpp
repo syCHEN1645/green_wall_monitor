@@ -8,6 +8,8 @@
 #include "esp_event.h"
 #include "nvs_flash.h"
 #include "esp_sntp.h"
+#include "esp_log.h"
+#include "esp_err.h"
 
 #include "SensorDevice.hpp"
 #include "DS18B20Device.hpp"
@@ -23,13 +25,20 @@ void initialiseSensor() {
     // Use make_unique to manage memory automatically
     auto sensor_1 = std::make_unique<SEN0385Device>("wall_green");
     int args_1[] = {CONFIG_SEN0385_SDA_PIN, CONFIG_SEN0385_SCL_PIN};
-    sensor_1->setupSensor(args_1);
-    sensors.push_back(std::move(sensor_1));
+    if (sensor_1->setupSensor(args_1) == ESP_OK) {
+        sensors.push_back(std::move(sensor_1));
+    } else {
+        ESP_LOGE("SensorInit", "Failed to initialize SEN0385 sensor");
+    }
 
     auto sensor_2 = std::make_unique<DS18B20Device>("wall_control");
     int args_2[] = {CONFIG_DS18B20_PIN};
-    sensor_2->setupSensor(args_2);
-    sensors.push_back(std::move(sensor_2));
+    if (sensor_2->setupSensor(args_2) == ESP_OK) {
+        sensors.push_back(std::move(sensor_2));
+    } else {
+        ESP_LOGE("SensorInit", "Failed to initialize DS18B20 sensor");
+    }
+    
 }
 
 void initialiseWiFi() {

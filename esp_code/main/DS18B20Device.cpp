@@ -23,14 +23,10 @@ DS18B20Device::~DS18B20Device()
     {
         ds18b20_del_device(sensor_handle);
     }
-    // if (bus_handle)
-    // {
-    //     onewire_del_bus(bus_handle);
-    // }
 }
 
 // Assign the bus and sensor handles
-void DS18B20Device::setupSensor(int gpio_pin[])
+esp_err_t DS18B20Device::setupSensor(int gpio_pin[])
 {
     onewire_bus_config_t bus_config = {
         .bus_gpio_num = gpio_pin[0],
@@ -42,11 +38,16 @@ void DS18B20Device::setupSensor(int gpio_pin[])
         // 1byte ROM command + 8byte ROM number + 1byte device command
         .max_rx_bytes = 10,
     };
-    ESP_ERROR_CHECK(onewire_new_bus_rmt(&bus_config, &rmt_config, &this->bus_handle));
+    if (onewire_new_bus_rmt(&bus_config, &rmt_config, &this->bus_handle) != ESP_OK) {
+        return ESP_FAIL;
+    }
 
     // create 1-wire device iterator for device search
     onewire_device_iter_handle_t iter = NULL;
-    ESP_ERROR_CHECK(onewire_new_device_iter(this->bus_handle, &iter));
+    if (onewire_new_device_iter(this->bus_handle, &iter) != ESP_OK) {
+        ESP_LOGE(this->name.c_str(), "Failed to create 1-wire device iterator\n");
+        return ESP_FAIL;
+    }
     
     onewire_device_t next_device;
     while (onewire_device_iter_get_next(iter, &next_device) == ESP_OK)
@@ -61,26 +62,30 @@ void DS18B20Device::setupSensor(int gpio_pin[])
         }
     }
 
-    ESP_ERROR_CHECK(onewire_del_device_iter(iter));
+    if (onewire_del_device_iter(iter) != ESP_OK) {
+        ESP_LOGE(this->name.c_str(), "Failed to delete 1-wire device iterator");
+        return ESP_FAIL;
+    }
+    return ESP_OK;
 }
 
 std::vector<float> DS18B20Device::getReadingOnce()
 {
     std::vector<float> temperature(1, -127.0);
     if (!this->sensor_handle) {
-        ESP_LOGE(this->TAG, "Sensor not initialized");
+        ESP_LOGE(this->name.c_str(), "Sensor not initialized");
         return temperature;
     }
 
     if (ds18b20_trigger_temperature_conversion(this->sensor_handle) != ESP_OK) {
-        ESP_LOGE(this->TAG, "Failed to trigger temperature conversion");
+        ESP_LOGE(this->name.c_str(), "Failed to trigger temperature conversion");
         return temperature;
     }
 
     // wait for conversion to complete, typically 750ms for 12 bit resolution
     vTaskDelay(pdMS_TO_TICKS(800));
     if (ds18b20_get_temperature(this->sensor_handle, &temperature[0]) != ESP_OK) {
-        ESP_LOGE(this->TAG, "Failed to read temperature");
+        ESP_LOGE(this->name.c_str(), "Failed to read temperature");
         return temperature;
     }
 
