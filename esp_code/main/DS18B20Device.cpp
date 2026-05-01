@@ -4,18 +4,18 @@
 #include "onewire_bus.h"
 #include "ds18b20.h"
 
-#include "Thermocouple.hpp"
+#include "DS18B20Device.hpp"
 
-static const char* TAG = "Thermocouple";
+const char* DS18B20Device::TAG = "DS18B20_Sensor";
 
-Thermocouple::Thermocouple(std::string name) : name(name)
+DS18B20Device::DS18B20Device(std::string name) : name(name)
 {
     // Constructor can be used to initialize member variables if needed
     this->bus_handle = nullptr;
     this->sensor_handle = nullptr;
 }
 
-Thermocouple::~Thermocouple()
+DS18B20Device::~DS18B20Device()
 {
     // Clean up resources if needed
     if (sensor_handle)
@@ -29,7 +29,7 @@ Thermocouple::~Thermocouple()
 }
 
 // Assign the bus and sensor handles
-void Thermocouple::setupSensor(int gpio_pin)
+void DS18B20Device::setupSensor(int gpio_pin)
 {
     onewire_bus_config_t bus_config = {
         .bus_gpio_num = gpio_pin,
@@ -63,7 +63,25 @@ void Thermocouple::setupSensor(int gpio_pin)
     ESP_ERROR_CHECK(onewire_del_device_iter(iter));
 }
 
-float Thermocouple::getTemperature()
+float DS18B20Device::getTemperature()
 {
-    return 0.0;
+    float temperature = -127.0;
+    if (!this->sensor_handle) {
+        ESP_LOGE(this->TAG, "Sensor not initialized");
+        return temperature;
+    }
+
+    if (ds18b20_trigger_temperature_conversion(this->sensor_handle) != ESP_OK) {
+        ESP_LOGE(this->TAG, "Failed to trigger temperature conversion");
+        return temperature;
+    }
+
+    // wait for conversion to complete, typically 750ms for 12 bit resolution
+    vTaskDelay(pdMS_TO_TICKS(800));
+    if (ds18b20_get_temperature(this->sensor_handle, &temperature) != ESP_OK) {
+        ESP_LOGE(this->TAG, "Failed to read temperature");
+        return temperature;
+    }
+
+    return temperature;
 }

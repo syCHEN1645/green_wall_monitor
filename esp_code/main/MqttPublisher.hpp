@@ -1,0 +1,17 @@
+#pragma once
+#include "mqtt_client.h"
+
+class MqttPublisher {
+public:
+    MqttPublisher();
+    ~MqttPublisher();
+
+    void publish(const char* topic, const char* data, int qos, int retain);
+    void subscribe(const char* topic, int qos);
+    void unsubscribe(const char* topic);
+    void disconnect();
+
+private:
+    esp_mqtt_client_handle_t client;
+    static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
+};
