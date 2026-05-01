@@ -4,8 +4,9 @@
 #include <string>
 #include "ds18b20.h"
 #include "onewire_bus.h"
+#include "SensorDevice.hpp"
 
-class DS18B20Device
+class DS18B20Device : public SensorDevice
 {
 public:
     std::string name;
@@ -13,8 +14,8 @@ public:
     
     DS18B20Device(std::string name);
     ~DS18B20Device();
-    void setupSensor(int gpio_pin);
-    float getTemperature();
+    void setupSensor(int gpio_pins[]) override;
+    std::vector<float> getReadingOnce() override;
     
 private:
     onewire_bus_handle_t bus_handle;
