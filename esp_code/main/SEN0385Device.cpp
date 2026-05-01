@@ -21,7 +21,7 @@ esp_err_t SEN0385Device::setupSensor(int gpio_pins[])
     // Initialize the SHT3x sensor
     // GPIO pins: [SDA, SCL]
     if (i2cdev_init() != ESP_OK) {
-        printf("Error initializing I2C\n");
+        ESP_LOGE(this->name.c_str(), "Error initializing I2C\n");
         return ESP_FAIL;
     }
     memset(&this->dev, 0, sizeof(sht3x_t));

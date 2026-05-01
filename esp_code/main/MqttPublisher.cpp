@@ -1,9 +1,11 @@
 #include "MqttPublisher.hpp"
 #include "config.h"
+#include "esp_log.h"
 
 MqttPublisher::MqttPublisher() {
     esp_mqtt_client_config_t mqtt_cfg = {};
-    mqtt_cfg.broker.address.uri = MQTT_BROKER_URL;    
+    mqtt_cfg.broker.address.uri = MQTT_BROKER_URL;
+    // mqtt_cfg.broker.verification.skip_cert_common_name_check = true;
     client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(
         client, 
@@ -27,16 +29,16 @@ void MqttPublisher::mqtt_event_handler(void *handler_args, esp_event_base_t base
 
     switch ((esp_mqtt_event_id_t)event_id) {
         case MQTT_EVENT_CONNECTED:
-            printf("MQTT Connected\n");
+            ESP_LOGI("MQTT", "Connected");
             break;
         case MQTT_EVENT_DISCONNECTED:
-            printf("MQTT Disconnected\n");
+            ESP_LOGI("MQTT", "Disconnected");
             break;
         case MQTT_EVENT_PUBLISHED:
-            printf("MQTT Published\n");
+            ESP_LOGI("MQTT", "Published");
             break;
         default:
-            printf("MQTT Event: %ld\n", event_id);
+            ESP_LOGI("MQTT", "Event: %ld", event_id);
             break;
     }
 }
