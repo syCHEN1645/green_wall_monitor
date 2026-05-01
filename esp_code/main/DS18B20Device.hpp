@@ -1,18 +1,21 @@
-#ifndef THERMOCOUPLE_HPP
-#define THERMOCOUPLE_HPP
+#ifndef DS18B20DEVICE_HPP
+#define DS18B20DEVICE_HPP
 
 #include <string>
 #include "ds18b20.h"
 #include "onewire_bus.h"
 
-class Thermocouple {
+class DS18B20Device
+{
 public:
     std::string name;
-    Thermocouple(std::string name);
-    ~Thermocouple();
+    static const char* TAG;
+    
+    DS18B20Device(std::string name);
+    ~DS18B20Device();
     void setupSensor(int gpio_pin);
     float getTemperature();
-
+    
 private:
     onewire_bus_handle_t bus_handle;
     ds18b20_device_handle_t sensor_handle;
