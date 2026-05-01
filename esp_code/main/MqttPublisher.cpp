@@ -3,10 +3,14 @@
 
 MqttPublisher::MqttPublisher() {
     esp_mqtt_client_config_t mqtt_cfg = {};
-
-    mqtt_cfg.broker.address.uri = MQTT_BROKER_URL;
+    mqtt_cfg.broker.address.uri = MQTT_BROKER_URL;    
     client = esp_mqtt_client_init(&mqtt_cfg);
-    esp_mqtt_client_register_event(client, static_cast<esp_mqtt_event_id_t>(ESP_EVENT_ANY_ID), mqtt_event_handler, NULL);
+    esp_mqtt_client_register_event(
+        client, 
+        static_cast<esp_mqtt_event_id_t>(ESP_EVENT_ANY_ID), 
+        mqtt_event_handler, 
+        NULL
+    );
     esp_mqtt_client_start(client);
 }
 

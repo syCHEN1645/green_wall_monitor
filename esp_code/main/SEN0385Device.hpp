@@ -12,7 +12,7 @@ public:
     SEN0385Device(std::string name, uint8_t addr = 0x44);
     ~SEN0385Device();
 
-    void setupSensor(int gpio_pins[]) override;
+    esp_err_t setupSensor(int gpio_pins[]) override;
     std::vector<float> getReadingOnce() override;
 private:
     std::string name;
