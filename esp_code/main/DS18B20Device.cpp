@@ -18,10 +18,13 @@ DS18B20Device::DS18B20Device(std::string name) : name(name)
 
 DS18B20Device::~DS18B20Device()
 {
-    // Clean up resources if needed
-    if (sensor_handle)
-    {
+    if (sensor_handle) {
         ds18b20_del_device(sensor_handle);
+        sensor_handle = nullptr;
+    }
+    if (bus_handle) {
+        onewire_bus_del(bus_handle);
+        bus_handle = nullptr;
     }
 }
 
@@ -39,6 +42,7 @@ esp_err_t DS18B20Device::setupSensor(int gpio_pin[])
         .max_rx_bytes = 10,
     };
     if (onewire_new_bus_rmt(&bus_config, &rmt_config, &this->bus_handle) != ESP_OK) {
+        ESP_LOGE(this->name.c_str(), "Failed to create 1-wire bus on GPIO %d", gpio_pin[0]);
         return ESP_FAIL;
     }
 
@@ -46,26 +50,42 @@ esp_err_t DS18B20Device::setupSensor(int gpio_pin[])
     onewire_device_iter_handle_t iter = NULL;
     if (onewire_new_device_iter(this->bus_handle, &iter) != ESP_OK) {
         ESP_LOGE(this->name.c_str(), "Failed to create 1-wire device iterator\n");
+        onewire_bus_del(this->bus_handle);
+        this->bus_handle = nullptr;
         return ESP_FAIL;
     }
     
     onewire_device_t next_device;
-    while (onewire_device_iter_get_next(iter, &next_device) == ESP_OK)
-    { // found a new device, let's check if we can upgrade it to a DS18B20
+    esp_err_t search_result = ESP_OK;
+    while ((search_result = onewire_device_iter_get_next(iter, &next_device)) == ESP_OK) { // found a new device, let's check if we can upgrade it to a DS18B20
         ds18b20_config_t ds_cfg = {};
         onewire_device_address_t address;
         // check if the device is a DS18B20, if so, assign the ds18b20 handle
-        if (ds18b20_new_device_from_enumeration(&next_device, &ds_cfg, &this->sensor_handle) == ESP_OK)
-        {
+        if (ds18b20_new_device_from_enumeration(&next_device, &ds_cfg, &this->sensor_handle) == ESP_OK) {
             ds18b20_get_device_address(this->sensor_handle, &address);
+            ESP_LOGI(this->name.c_str(), "Found DS18B20 at address: %016llX", address);
             break;
         }
     }
 
+    if (search_result != ESP_ERR_NOT_FOUND && search_result != ESP_OK) {
+        ESP_LOGE(this->name.c_str(), "1-wire search failed: %s", esp_err_to_name(search_result));
+    }
+
     if (onewire_del_device_iter(iter) != ESP_OK) {
         ESP_LOGE(this->name.c_str(), "Failed to delete 1-wire device iterator");
+        onewire_bus_del(this->bus_handle);
+        this->bus_handle = nullptr;
         return ESP_FAIL;
     }
+
+    if (!this->sensor_handle) {
+        ESP_LOGE(this->name.c_str(), "No DS18B20 found on GPIO %d", gpio_pin[0]);
+        onewire_bus_del(this->bus_handle);
+        this->bus_handle = nullptr;
+        return ESP_FAIL;
+    }
+
     return ESP_OK;
 }
 
