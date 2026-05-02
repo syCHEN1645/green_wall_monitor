@@ -1,29 +1,71 @@
 #include <stdio.h>
 #include <string.h>
+#include <vector>
+#include <memory>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "nvs_flash.h"
 #include "esp_sntp.h"
+#include "esp_log.h"
+#include "esp_err.h"
 
-#include "Thermocouple.hpp"
+#include "SensorDevice.hpp"
+#include "DS18B20Device.hpp"
+#include "SEN0385Device.hpp"
+#include "WiFiManager.hpp"
+#include "MqttPublisher.hpp"
 #include "config.h"
 
-void sensor_task(void *pvParameters) {
-    Thermocouple solar("solar");
-    Thermocouple compare("compare");
+// use smart pointers as placeholder to prevent startup order issues
+std::unique_ptr<WiFiManager> wifiManager;
+std::unique_ptr<MqttPublisher> mqttPub;
+
+std::vector<std::unique_ptr<SensorDevice>> sensors;
+
+void initialiseSensor() {
+    // Use make_unique to manage memory automatically
+    auto sensor_1 = std::make_unique<SEN0385Device>("wall_green");
+    int args_1[] = {CONFIG_SEN0385_SDA_PIN, CONFIG_SEN0385_SCL_PIN};
+    if (sensor_1->setupSensor(args_1) == ESP_OK) {
+        sensors.push_back(std::move(sensor_1));
+    } else {
+        ESP_LOGE("SensorInit", "Failed to initialize SEN0385 sensor");
+    }
+
+    auto sensor_2 = std::make_unique<DS18B20Device>("wall_control");
+    int args_2[] = {CONFIG_DS18B20_PIN};
+    if (sensor_2->setupSensor(args_2) == ESP_OK) {
+        sensors.push_back(std::move(sensor_2));
+    } else {
+        ESP_LOGE("SensorInit", "Failed to initialize DS18B20 sensor");
+    }
     
-    solar.setupSensor(32);
-    compare.setupSensor(33);
+}
 
+void initialiseWiFi() {
+    wifiManager = std::make_unique<WiFiManager>();
+    wifiManager->setupWiFi();
+    wifiManager->connect(WIFI_SSID, WIFI_PASSWORD);
+    wifiManager->waitForConnection();
+}
+
+void initialiseMqtt() {
+    // mqtt client
+    mqttPub = std::make_unique<MqttPublisher>();
+}
+
+void sensor_task(void *pvParameters) {
     while (1) {
-        float t1 = solar.getTemperature();
-        float t2 = compare.getTemperature();
-        
-        printf("Solar: %.2f, Compare: %.2f\n", t1, t2);
-
-        vTaskDelay(pdMS_TO_TICKS(10000)); 
+        for (auto& s : sensors) {
+            std::vector<float> readings = s->getReadingOnce();
+            for (size_t i = 0; i < readings.size(); i++) {
+                printf("Reading %zu: %.2f\n", i, readings[i]);
+                mqttPub->publish("topic", (std::to_string(readings[i])).c_str(), 0, 0);
+            }
+        }
+        vTaskDelay(pdMS_TO_TICKS(DATA_PUBLISH_INTERVAL_FAST_S * 1000));
     }
 }
 
@@ -38,6 +80,10 @@ extern "C" void app_main(void) {
 
     // 2. Network / SNTP Initialization (Equivalent to your setup())
     // Note: You'll need a standard Wi-Fi helper here 
+    initialiseWiFi();
+    vTaskDelay(pdMS_TO_TICKS(1000)); // Wait a bit for Wi-Fi to stabilize
+    initialiseMqtt();
+    initialiseSensor();
     
     // 3. Set Timezone (Your UTC-8 logic)
     setenv("TZ", "CST-8", 1); // "CST-8" is often used for Singapore/China
