@@ -24,6 +24,12 @@ std::unique_ptr<MqttPublisher> mqttPub;
 
 std::vector<std::unique_ptr<SensorDevice>> sensors;
 
+void initialiseHardware() {
+    if (i2cdev_init() != ESP_OK) {
+        ESP_LOGE("HardwareInit", "Error initializing I2C\n");
+    }
+}
+
 void initialiseSensor() {
     // Use make_unique to manage memory automatically
     auto sensor_1 = std::make_unique<SEN0385Device>("air_temp_1");
@@ -85,6 +91,8 @@ extern "C" void app_main(void) {
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
+
+    initialiseHardware();
 
     // 2. Network / SNTP Initialization (Equivalent to your setup())
     // Note: You'll need a standard Wi-Fi helper here 
