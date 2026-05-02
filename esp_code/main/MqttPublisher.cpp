@@ -2,10 +2,15 @@
 #include "config.h"
 #include "esp_log.h"
 
+extern const uint8_t mqtt_isgrootx1_pem_start[]   asm("_binary_isrgrootx1_pem_start");
+extern const uint8_t mqtt_isgrootx1_pem_end[]   asm("_binary_isrgrootx1_pem_end");
+
 MqttPublisher::MqttPublisher() {
     esp_mqtt_client_config_t mqtt_cfg = {};
     mqtt_cfg.broker.address.uri = MQTT_BROKER_URL;
-    mqtt_cfg.broker.verification.skip_cert_common_name_check = true;
+    mqtt_cfg.credentials.username = MQTT_USERNAME;
+    mqtt_cfg.credentials.authentication.password = MQTT_PASSWORD;
+    mqtt_cfg.broker.verification.certificate = (const char *)mqtt_isgrootx1_pem_start;
     client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(
         client, 
