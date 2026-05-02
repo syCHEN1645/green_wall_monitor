@@ -1,6 +1,8 @@
 // WiFi configuration
-#define WIFI_SSID "Singtel8900-E948"
-#define WIFI_PASSWORD "0002550088"
+// #define WIFI_SSID "Singtel8900-E948"
+// #define WIFI_PASSWORD "0002550088"
+#define WIFI_SSID "csy"
+#define WIFI_PASSWORD "55555555"
 #define WIFI_MAX_RETRY 5
 
 // mqtt broker configuration

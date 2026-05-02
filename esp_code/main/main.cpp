@@ -26,13 +26,14 @@ std::vector<std::unique_ptr<SensorDevice>> sensors;
 
 void initialiseHardware() {
     if (i2cdev_init() != ESP_OK) {
-        ESP_LOGE("HardwareInit", "Error initializing I2C\n");
+        ESP_LOGE("HardwareInit", "Error initializing I2C");
     }
+    ESP_LOGI("HardwareInit", "Initialized I2C");
 }
 
 void initialiseSensor() {
     // Use make_unique to manage memory automatically
-    auto sensor_1 = std::make_unique<SEN0385Device>("air_temp_1");
+    auto sensor_1 = std::make_unique<SEN0385Device>("air_temp_1", CONFIG_SEN0385_I2C_ADDR);
     int args_1[] = {CONFIG_SEN0385_SDA_PIN, CONFIG_SEN0385_SCL_PIN};
     if (sensor_1->setupSensor(args_1) == ESP_OK) {
         sensors.push_back(std::move(sensor_1));
@@ -75,7 +76,7 @@ void sensor_task(void *pvParameters) {
         for (auto& s : sensors) {
             std::vector<float> readings = s->getReadingOnce();
             for (size_t i = 0; i < readings.size(); i++) {
-                printf("Reading %zu: %.2f\n", i, readings[i]);
+                printf("Reading %zu: %.2f\n" , i, readings[i]);
                 mqttPub->publish("topic", (std::to_string(readings[i])).c_str(), 0, 0);
             }
         }
