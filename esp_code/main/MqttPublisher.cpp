@@ -5,7 +5,7 @@
 MqttPublisher::MqttPublisher() {
     esp_mqtt_client_config_t mqtt_cfg = {};
     mqtt_cfg.broker.address.uri = MQTT_BROKER_URL;
-    // mqtt_cfg.broker.verification.skip_cert_common_name_check = true;
+    mqtt_cfg.broker.verification.skip_cert_common_name_check = true;
     client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(
         client, 

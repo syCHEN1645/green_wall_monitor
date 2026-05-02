@@ -1,6 +1,6 @@
 // WiFi configuration
-#define WIFI_SSID "csy"
-#define WIFI_PASSWORD "55555555"
+#define WIFI_SSID "Singtel8900-E948"
+#define WIFI_PASSWORD "0002550088"
 #define WIFI_MAX_RETRY 5
 
 // mqtt broker configuration
@@ -17,6 +17,7 @@
 
 // PIN and address configuration for sensors
 #define CONFIG_SEN0385_I2C_ADDR 0x44
-#define CONFIG_DS18B20_PIN 33
+#define CONFIG_DS18B20_1_PIN 32
+#define CONFIG_DS18B20_2_PIN 33
 #define CONFIG_SEN0385_SDA_PIN 21
 #define CONFIG_SEN0385_SCL_PIN 22

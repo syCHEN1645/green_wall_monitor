@@ -26,7 +26,7 @@ std::vector<std::unique_ptr<SensorDevice>> sensors;
 
 void initialiseSensor() {
     // Use make_unique to manage memory automatically
-    auto sensor_1 = std::make_unique<SEN0385Device>("wall_green");
+    auto sensor_1 = std::make_unique<SEN0385Device>("air_temp_1");
     int args_1[] = {CONFIG_SEN0385_SDA_PIN, CONFIG_SEN0385_SCL_PIN};
     if (sensor_1->setupSensor(args_1) == ESP_OK) {
         sensors.push_back(std::move(sensor_1));
@@ -34,10 +34,18 @@ void initialiseSensor() {
         ESP_LOGE("SensorInit", "Failed to initialize SEN0385 sensor");
     }
 
-    auto sensor_2 = std::make_unique<DS18B20Device>("wall_control");
-    int args_2[] = {CONFIG_DS18B20_PIN};
+    auto sensor_2 = std::make_unique<DS18B20Device>("water_temp_1");
+    int args_2[] = {CONFIG_DS18B20_1_PIN};
     if (sensor_2->setupSensor(args_2) == ESP_OK) {
         sensors.push_back(std::move(sensor_2));
+    } else {
+        ESP_LOGE("SensorInit", "Failed to initialize DS18B20 sensor");
+    }
+
+    auto sensor_3 = std::make_unique<DS18B20Device>("water_temp_2");
+    int args_3[] = {CONFIG_DS18B20_2_PIN};
+    if (sensor_3->setupSensor(args_3) == ESP_OK) {
+        sensors.push_back(std::move(sensor_3));
     } else {
         ESP_LOGE("SensorInit", "Failed to initialize DS18B20 sensor");
     }
