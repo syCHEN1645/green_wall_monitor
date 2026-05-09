@@ -7,7 +7,6 @@
 class SensorDevice
 {
 public:
-    virtual ~SensorDevice() {}
     virtual esp_err_t setupSensor(int gpio_pins[]) = 0;
     virtual std::vector<float> getReadingOnce() = 0;
 };
