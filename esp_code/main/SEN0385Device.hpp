@@ -18,5 +18,6 @@ private:
     std::string name;
     sht3x_t dev;
     uint8_t address;
+    bool descriptor_initialized;
 };
 #endif
