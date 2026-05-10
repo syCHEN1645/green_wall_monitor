@@ -48,13 +48,13 @@ void initialiseHardware() {
 
 void initialiseSensor() {
     // Use make_unique to manage memory automatically
-    // auto sensor_1 = std::make_unique<SEN0385Device>("air_temp_1", CONFIG_SEN0385_I2C_ADDR);
-    // int args_1[] = {CONFIG_SEN0385_SDA_PIN, CONFIG_SEN0385_SCL_PIN};
-    // if (sensor_1->setupSensor(args_1) == ESP_OK) {
-    //     sensors.push_back(std::move(sensor_1));
-    // } else {
-    //     ESP_LOGE("SensorInit", "Failed to initialize air_temp_1 sensor");
-    // }
+    auto sensor_1 = std::make_unique<SEN0385Device>("air_temp_1", CONFIG_SEN0385_I2C_ADDR);
+    int args_1[] = {CONFIG_SEN0385_1_SDA_PIN, CONFIG_SEN0385_1_SCL_PIN, int(I2C_NUM_0)};
+    if (sensor_1->setupSensor(args_1) == ESP_OK) {
+        sensors.push_back(std::move(sensor_1));
+    } else {
+        ESP_LOGE("SensorInit", "Failed to initialize air_temp_1 sensor");
+    }
 
     // auto sensor_2 = std::make_unique<DS18B20Device>("water_temp_1");
     // int args_2[] = {CONFIG_DS18B20_1_PIN};
@@ -79,8 +79,17 @@ void initialiseSensor() {
         // after running this, sensor_4 points to null, avoid using it after this
         sensors.push_back(std::move(sensor_4));
     } else {
-        ESP_LOGI("SensorInit", "Initialized sensor %s", sensor_4->name.c_str());
+        ESP_LOGE("SensorInit", "Failed to initialize soil_moisture_1 sensor");
     }
+
+    auto sensor_5 = std::make_unique<SEN0385Device>("air_temp_2", CONFIG_SEN0385_I2C_ADDR);
+    int args_5[] = {CONFIG_SEN0385_2_SDA_PIN, CONFIG_SEN0385_2_SCL_PIN, int(I2C_NUM_1)};
+    if (sensor_5->setupSensor(args_5) == ESP_OK) {
+        sensors.push_back(std::move(sensor_5));
+    } else {
+        ESP_LOGE("SensorInit", "Failed to initialize air_temp_2 sensor");
+    }
+
 }
 
 void initialiseWiFi() {
@@ -101,6 +110,7 @@ void sensor_task(void *pvParameters) {
             std::vector<float> readings = s->getReadingOnce();
             for (size_t i = 0; i < readings.size(); i++) {
                 printf("Reading %zu: %.2f\n" , i, readings[i]);
+                mqttPub->publish("topic", (std::to_string(readings[i])).c_str(), 0, 0);
             }
         }
         vTaskDelay(pdMS_TO_TICKS(DATA_PUBLISH_INTERVAL_FAST_S * 1000));
@@ -120,9 +130,9 @@ extern "C" void app_main(void) {
 
     // 2. Network / SNTP Initialization (Equivalent to your setup())
     // Note: You'll need a standard Wi-Fi helper here 
-    // initialiseWiFi();
+    initialiseWiFi();
     vTaskDelay(pdMS_TO_TICKS(1000)); // Wait a bit for Wi-Fi to stabilize
-    // initialiseMqtt();
+    initialiseMqtt();
     initialiseSensor();
     
     // 3. Set Timezone (Your UTC-8 logic)
