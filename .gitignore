@@ -4,7 +4,6 @@ sdkconfig
 esp_code/managed_components/
 esp_code/build/
 esp_code/main/config.h
-
 database/telegraf.conf
 
 # Byte-compiled / optimized / DLL files
