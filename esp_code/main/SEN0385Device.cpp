@@ -5,6 +5,7 @@
 #include <string.h>
 #include <esp_err.h>
 #include <esp_log.h>
+#include <i2cdev.h>
 
 #include "config.h"
 #include "SEN0385Device.hpp"
@@ -23,10 +24,11 @@ esp_err_t SEN0385Device::setupSensor(int gpio_pins[])
 {
     // Initialize the SHT3x sensor
     // GPIO pins: [SDA, SCL]
+
     memset(&this->dev, 0, sizeof(sht3x_t));
 
     if (sht3x_init_desc(&this->dev, this->address, I2C_NUM_0, (gpio_num_t)gpio_pins[0], (gpio_num_t)gpio_pins[1]) != ESP_OK) {
-        ESP_LOGE(this->name.c_str(), "Error initializing SHT3x sensor descriptor\n");
+        ESP_LOGE(this->name.c_str(), "Error initializing SHT3x sensor descriptor");
         return ESP_FAIL;
     }
     descriptor_initialized = true;
