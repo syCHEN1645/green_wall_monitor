@@ -23,11 +23,10 @@ SEN0385Device::~SEN0385Device()
 esp_err_t SEN0385Device::setupSensor(int gpio_pins[])
 {
     // Initialize the SHT3x sensor
-    // GPIO pins: [SDA, SCL]
-
+    // GPIO pins: 0 SDA, 1 SCK, 2 port
     memset(&this->dev, 0, sizeof(sht3x_t));
 
-    if (sht3x_init_desc(&this->dev, this->address, I2C_NUM_0, (gpio_num_t)gpio_pins[0], (gpio_num_t)gpio_pins[1]) != ESP_OK) {
+    if (sht3x_init_desc(&this->dev, this->address, (i2c_port_t)gpio_pins[2], (gpio_num_t)gpio_pins[0], (gpio_num_t)gpio_pins[1]) != ESP_OK) {
         ESP_LOGE(this->name.c_str(), "Error initializing SHT3x sensor descriptor");
         return ESP_FAIL;
     }
