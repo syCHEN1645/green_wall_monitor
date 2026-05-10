@@ -10,11 +10,14 @@
 #include "config.h"
 #include "SEN0385Device.hpp"
 
-SEN0385Device::SEN0385Device(std::string name, uint8_t addr) : name(name), address(addr) {}
+SEN0385Device::SEN0385Device(std::string name, uint8_t addr) : name(name), address(addr), descriptor_initialized(false) {}
 
 SEN0385Device::~SEN0385Device()
 {
-    // Clean up resources if needed
+    if (descriptor_initialized) {
+        sht3x_free_desc(&this->dev);
+        descriptor_initialized = false;
+    }
 }
 
 esp_err_t SEN0385Device::setupSensor(int gpio_pins[])
@@ -28,11 +31,17 @@ esp_err_t SEN0385Device::setupSensor(int gpio_pins[])
         ESP_LOGE(this->name.c_str(), "Error initializing SHT3x sensor descriptor");
         return ESP_FAIL;
     }
+    descriptor_initialized = true;
 
-    this->dev.i2c_dev.cfg.master.clk_speed = 100000; // Force 100kHz
+    // 100 kHz is more tolerant for longer wires/noisy setups than 1 MHz default in this driver.
+    this->dev.i2c_dev.cfg.master.clk_speed = 100000;
+    this->dev.i2c_dev.cfg.sda_pullup_en = GPIO_PULLUP_ENABLE;
+    this->dev.i2c_dev.cfg.scl_pullup_en = GPIO_PULLUP_ENABLE;
 
     if (sht3x_init(&this->dev) != ESP_OK) {
-        ESP_LOGE(this->name.c_str(), "Error initializing SHT3x sensor");
+        ESP_LOGE(this->name.c_str(), "Error initializing SHT3x sensor\n");
+        sht3x_free_desc(&this->dev);
+        descriptor_initialized = false;
         return ESP_FAIL;
     }
     return ESP_OK;
