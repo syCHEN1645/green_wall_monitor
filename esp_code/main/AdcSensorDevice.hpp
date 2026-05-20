@@ -11,15 +11,15 @@
 class AdcSensorDevice : public SensorDevice
 {
 public:
-	std::string name;
-
 	AdcSensorDevice(std::string name, adc_oneshot_unit_handle_t adc_handle);
 
 	esp_err_t setupSensor(int gpio_pins[]) override;
 	virtual float parseAdcValue(int raw_value);
 	std::vector<float> getReadingOnce() override;
+	virtual const std::vector<std::string>& getMeasurements() const override;
 
-private:
+protected:
+	static const std::vector<std::string> measurements;
 	adc_unit_t adc_unit;
 	adc_channel_t adc_channel;
     adc_oneshot_unit_handle_t adc_handle;

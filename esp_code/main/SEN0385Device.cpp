@@ -10,13 +10,23 @@
 #include "config.h"
 #include "SEN0385Device.hpp"
 
-SEN0385Device::SEN0385Device(std::string name, uint8_t addr) : name(name), address(addr), descriptor_initialized(false) {}
+const std::vector<std::string> SEN0385Device::measurements = {
+    SENSOR_MEASUREMENT_AIR_TEMP, 
+    SENSOR_MEASUREMENT_AIR_HUMIDITY
+};
+
+SEN0385Device::SEN0385Device(std::string name, uint8_t addr)
+{
+    this->name = name;
+    this->address = addr;
+    this->descriptor_initialized = false;
+}
 
 SEN0385Device::~SEN0385Device()
 {
-    if (descriptor_initialized) {
+    if (this->descriptor_initialized) {
         sht3x_free_desc(&this->dev);
-        descriptor_initialized = false;
+        this->descriptor_initialized = false;
     }
 }
 
@@ -30,7 +40,7 @@ esp_err_t SEN0385Device::setupSensor(int gpio_pins[])
         ESP_LOGE(this->name.c_str(), "Error initializing SHT3x sensor descriptor");
         return ESP_FAIL;
     }
-    descriptor_initialized = true;
+    this->descriptor_initialized = true;
 
     // 100 kHz is more tolerant for longer wires/noisy setups than 1 MHz default in this driver.
     this->dev.i2c_dev.cfg.master.clk_speed = 100000;
@@ -40,10 +50,15 @@ esp_err_t SEN0385Device::setupSensor(int gpio_pins[])
     if (sht3x_init(&this->dev) != ESP_OK) {
         ESP_LOGE(this->name.c_str(), "Error initializing SHT3x sensor\n");
         sht3x_free_desc(&this->dev);
-        descriptor_initialized = false;
+        this->descriptor_initialized = false;
         return ESP_FAIL;
     }
     return ESP_OK;
+}
+
+const std::vector<std::string>& SEN0385Device::getMeasurements() const
+{
+    return this->measurements;
 }
 
 std::vector<float> SEN0385Device::getReadingOnce()
