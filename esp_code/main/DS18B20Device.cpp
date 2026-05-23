@@ -9,9 +9,13 @@
 
 const char* DS18B20Device::TAG = "DS18B20_Sensor";
 
-DS18B20Device::DS18B20Device(std::string name) : name(name)
+const std::vector<std::string> DS18B20Device::measurements = {
+    SENSOR_MEASUREMENT_AIR_TEMP
+};
+
+DS18B20Device::DS18B20Device(std::string name)
 {
-    // Constructor can be used to initialize member variables if needed
+    this->name = name;
     this->bus_handle = nullptr;
     this->sensor_handle = nullptr;
 }

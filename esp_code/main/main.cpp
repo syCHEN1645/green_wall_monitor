@@ -10,6 +10,7 @@
 #include "esp_sntp.h"
 #include "esp_log.h"
 #include "esp_err.h"
+#include "esp_sleep.h"
 
 #include "SensorDevice.hpp"
 #include "DS18B20Device.hpp"
@@ -48,39 +49,53 @@ void initialiseHardware() {
 
 void initialiseSensor() {
     // Use make_unique to manage memory automatically
-    // auto sensor_1 = std::make_unique<SEN0385Device>("air_temp_1", CONFIG_SEN0385_I2C_ADDR);
-    // int args_1[] = {CONFIG_SEN0385_SDA_PIN, CONFIG_SEN0385_SCL_PIN};
-    // if (sensor_1->setupSensor(args_1) == ESP_OK) {
-    //     sensors.push_back(std::move(sensor_1));
-    // } else {
-    //     ESP_LOGE("SensorInit", "Failed to initialize air_temp_1 sensor");
-    // }
+    std::string sensor_name_1 = "air-temp-1";
+    auto sensor_1 = std::make_unique<SEN0385Device>(sensor_name_1, CONFIG_SEN0385_I2C_ADDR);
+    int args_1[] = {CONFIG_SEN0385_1_SDA_PIN, CONFIG_SEN0385_1_SCL_PIN, int(I2C_NUM_0)};
+    if (sensor_1->setupSensor(args_1) == ESP_OK) {
+        sensors.push_back(std::move(sensor_1));
+    } else {
+        ESP_LOGE("SensorInit", "Failed to initialize %s sensor", sensor_name_1.c_str());
+    }
 
-    // auto sensor_2 = std::make_unique<DS18B20Device>("water_temp_1");
+    // std::string sensor_name_2 = "water-temp-1";
+    // auto sensor_2 = std::make_unique<DS18B20Device>(sensor_name_2);
     // int args_2[] = {CONFIG_DS18B20_1_PIN};
     // if (sensor_2->setupSensor(args_2) == ESP_OK) {
     //     sensors.push_back(std::move(sensor_2));
     // } else {
-    //     ESP_LOGE("SensorInit", "Failed to initialize water_temp_1 sensor");
+    //     ESP_LOGE("SensorInit", "Failed to initialize %s sensor", sensor_name_2.c_str());
     // }
 
-    // auto sensor_3 = std::make_unique<DS18B20Device>("water_temp_2");
+    // std::string sensor_name_3 = "water-temp-2";
+    // auto sensor_3 = std::make_unique<DS18B20Device>(sensor_name_3);
     // int args_3[] = {CONFIG_DS18B20_2_PIN};
     // if (sensor_3->setupSensor(args_3) == ESP_OK) {
     //     sensors.push_back(std::move(sensor_3));
     // } else {
-    //     ESP_LOGE("SensorInit", "Failed to initialize water_temp_2 sensor");
+    //     ESP_LOGE("SensorInit", "Failed to initialize %s sensor", sensor_name_3.c_str());
     // }
 
-    auto sensor_4 = std::make_unique<SEN0308Device>("soil_moisture_1", adc_handle);
+    std::string sensor_name_4 = "soil-moisture-1";
+    auto sensor_4 = std::make_unique<SEN0308Device>(sensor_name_4, adc_handle);
     int args_4[] = {CONFIG_SEN0308_ADC_CHANNEL};
     // sensor_4->setupSensor(args_4);
     if (sensor_4->setupSensor(args_4) == ESP_OK) {
         // after running this, sensor_4 points to null, avoid using it after this
         sensors.push_back(std::move(sensor_4));
     } else {
-        ESP_LOGI("SensorInit", "Initialized sensor %s", sensor_4->name.c_str());
+        ESP_LOGE("SensorInit", "Failed to initialize %s sensor", sensor_name_4.c_str());
     }
+
+    std::string sensor_name_5 = "air-temp-2";
+    auto sensor_5 = std::make_unique<SEN0385Device>(sensor_name_5, CONFIG_SEN0385_I2C_ADDR);
+    int args_5[] = {CONFIG_SEN0385_2_SDA_PIN, CONFIG_SEN0385_2_SCL_PIN, int(I2C_NUM_1)};
+    if (sensor_5->setupSensor(args_5) == ESP_OK) {
+        sensors.push_back(std::move(sensor_5));
+    } else {
+        ESP_LOGE("SensorInit", "Failed to initialize %s sensor", sensor_name_5.c_str());
+    }
+
 }
 
 void initialiseWiFi() {
@@ -100,7 +115,7 @@ void sensor_task(void *pvParameters) {
         for (auto& s : sensors) {
             std::vector<float> readings = s->getReadingOnce();
             for (size_t i = 0; i < readings.size(); i++) {
-                printf("Reading %zu: %.2f\n" , i, readings[i]);
+                mqttPub->publishFloat(s->name.c_str(), s->getMeasurements()[i].c_str(), readings[i], 0, 0);
             }
         }
         vTaskDelay(pdMS_TO_TICKS(DATA_PUBLISH_INTERVAL_FAST_S * 1000));
@@ -116,19 +131,44 @@ extern "C" void app_main(void) {
     }
     ESP_ERROR_CHECK(ret);
 
+    // 2. Fire up essential hardware and sensors
     initialiseHardware();
-
-    // 2. Network / SNTP Initialization (Equivalent to your setup())
-    // Note: You'll need a standard Wi-Fi helper here 
-    // initialiseWiFi();
-    vTaskDelay(pdMS_TO_TICKS(1000)); // Wait a bit for Wi-Fi to stabilize
-    // initialiseMqtt();
     initialiseSensor();
+
+    // 3. Connect to network architecture
+    initialiseWiFi();
+    initialiseMqtt();
     
-    // 3. Set Timezone (Your UTC-8 logic)
-    setenv("TZ", "CST-8", 1); // "CST-8" is often used for Singapore/China
+    // 4. Set Timezone
+    setenv("TZ", "CST-8", 1); 
     tzset();
 
-    // 4. Start the main logic task
-    xTaskCreate(sensor_task, "sensor_task", 4096, NULL, 5, NULL);
+    // 5. Read sensors and publish immediately
+    ESP_LOGI("MainLog", "Processing sensor array data payload...");
+    for (auto& s : sensors) {
+        std::vector<float> readings = s->getReadingOnce();
+        for (size_t i = 0; i < readings.size(); i++) {
+            mqttPub->publishFloat(s->name.c_str(), s->getMeasurements()[i].c_str(), readings[i], 0, 0);
+            ESP_LOGI("MainLog", "Published %s: %f", s->name.c_str(), readings[i]);
+        }
+    }
+
+    // 6. Give the network stack a brief window to flush TCP packets out into the air.
+    // If sleep instantly, the radio shuts down mid-transmission.
+    vTaskDelay(pdMS_TO_TICKS(1500)); 
+
+    // 7. Clean up connections elegantly
+    mqttPub.reset();
+    esp_wifi_stop(); 
+
+    // 8. Go to Sleep
+    ESP_LOGI("MainLog", "Entering Deep Sleep mode for %d seconds...", DATA_PUBLISH_INTERVAL_NORMAL_S);
+    
+    // Configure timer (Convert seconds to microseconds), ULL means unsigned long long to prevent overflow
+    esp_sleep_enable_timer_wakeup(DATA_PUBLISH_INTERVAL_NORMAL_S * 1000000ULL);
+    
+    // Power down completely
+    esp_deep_sleep_start();
+
+    // The CPU shuts off right here. This line will never be reached!
 }

@@ -3,6 +3,7 @@
 #include "esp_log.h"
 #include "esp_crt_bundle.h"
 #include <cstring>
+#include <string>
 
 namespace {
 const char *TAG = "MQTT";
@@ -38,6 +39,11 @@ MqttPublisher::MqttPublisher() {
         this
     );
     esp_mqtt_client_start(client);
+    ESP_LOGI(TAG, "Waiting for secure broker handshake...");
+    while (!connected) {
+        vTaskDelay(pdMS_TO_TICKS(50)); 
+    }
+    ESP_LOGI(TAG, "Broker link established successfully inside constructor.");
 }
 
 MqttPublisher::~MqttPublisher() {
@@ -89,7 +95,7 @@ void MqttPublisher::mqtt_event_handler(void *handler_args, esp_event_base_t base
     }
 }
 
-void MqttPublisher::publish(const char* topic, const char* data, int qos, int retain) {
+void MqttPublisher::publishJson(const char* topic, const char* data, int qos, int retain) {
     if (!client) {
         ESP_LOGE(TAG, "MQTT client is not initialized");
         return;
@@ -100,6 +106,28 @@ void MqttPublisher::publish(const char* topic, const char* data, int qos, int re
     }
 
     int msg_id = esp_mqtt_client_publish(client, topic, data, 0, qos, retain);
+    if (msg_id < 0) {
+        ESP_LOGE(TAG, "Publish failed");
+    }
+}
+
+void MqttPublisher::publishFloat(const char* sensor, const char* measurement, float value, int qos, int retain) {
+    if (!client) {
+        ESP_LOGE(TAG, "MQTT client is not initialized");
+        return;
+    }
+    if (!connected) {
+        ESP_LOGW(TAG, "Skip publish while MQTT disconnected");
+        return;
+    }
+    
+    char topic[128];
+    snprintf(topic, sizeof(topic), "greenwall/%s/%s", sensor, measurement);
+
+    char value_str[32];
+    snprintf(value_str, sizeof(value_str), "%.2f", value);
+
+    int msg_id = esp_mqtt_client_publish(client, topic, value_str, 0, qos, retain);
     if (msg_id < 0) {
         ESP_LOGE(TAG, "Publish failed");
     }

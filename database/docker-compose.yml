@@ -1,15 +1,21 @@
 services:
   influxdb:
     image: influxdb:2.7
-    container_name: influxdb
+    container_name: greenwall-influxdb
     ports:
       - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=greenwall
+      - DOCKER_INFLUXDB_INIT_PASSWORD=Greenwall123
+      - DOCKER_INFLUXDB_INIT_ORG=greenwall
+      - DOCKER_INFLUXDB_INIT_BUCKET=test-data
     volumes:
       - influxdb-data:/var/lib/influxdb2
 
   telegraf:
     image: telegraf:latest
-    container_name: telegraf
+    container_name: greenwall-telegraf
     depends_on:
       - influxdb
     volumes:

@@ -6,6 +6,9 @@
 
 #include "AdcSensorDevice.hpp"
 
+// placeholder, will be overridden by derived classes
+const std::vector<std::string> AdcSensorDevice::measurements = {"adc-value"};
+
 AdcSensorDevice::AdcSensorDevice(std::string name, adc_oneshot_unit_handle_t adc_handle)
 {
     this->name = name;
@@ -28,6 +31,10 @@ esp_err_t AdcSensorDevice::setupSensor(int gpio_pins[]) {
     }
 
     return ESP_OK;
+}
+
+const std::vector<std::string>& AdcSensorDevice::getMeasurements() const {
+    return this->measurements;
 }
 
 float AdcSensorDevice::parseAdcValue(int raw_value) {

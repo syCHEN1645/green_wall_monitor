@@ -6,7 +6,8 @@ public:
     MqttPublisher();
     ~MqttPublisher();
 
-    void publish(const char* topic, const char* data, int qos, int retain);
+    void publishJson(const char* topic, const char* data, int qos, int retain);
+    void publishFloat(const char* sensor, const char* measurement, float value, int qos, int retain);
     void subscribe(const char* topic, int qos);
     void unsubscribe(const char* topic);
     void disconnect();
