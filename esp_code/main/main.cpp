@@ -10,6 +10,7 @@
 #include "esp_sntp.h"
 #include "esp_log.h"
 #include "esp_err.h"
+#include "esp_sleep.h"
 
 #include "SensorDevice.hpp"
 #include "DS18B20Device.hpp"
@@ -122,7 +123,6 @@ void sensor_task(void *pvParameters) {
 }
 
 extern "C" void app_main(void) {
-    vTaskDelay(pdMS_TO_TICKS(2000));
     // 1. Initialize NVS (Required for Wi-Fi)
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -130,26 +130,45 @@ extern "C" void app_main(void) {
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
-    vTaskDelay(pdMS_TO_TICKS(2000));
 
+    // 2. Fire up essential hardware and sensors
     initialiseHardware();
-    vTaskDelay(pdMS_TO_TICKS(2000));
-
-    // 2. Network / SNTP Initialization (Equivalent to your setup())
-    // Note: You'll need a standard Wi-Fi helper here 
-    initialiseWiFi();
-    vTaskDelay(pdMS_TO_TICKS(2000)); // Wait a bit for Wi-Fi to stabilize
-    
-    initialiseMqtt();
-    vTaskDelay(pdMS_TO_TICKS(2000));
-    
     initialiseSensor();
-    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    // 3. Connect to network architecture
+    initialiseWiFi();
+    initialiseMqtt();
     
-    // 3. Set Timezone (Your UTC-8 logic)
-    setenv("TZ", "CST-8", 1); // "CST-8" is often used for Singapore/China
+    // 4. Set Timezone
+    setenv("TZ", "CST-8", 1); 
     tzset();
 
-    // 4. Start the main logic task
-    xTaskCreate(sensor_task, "sensor_task", 4096, NULL, 5, NULL);
+    // 5. Read sensors and publish immediately
+    ESP_LOGI("MainLog", "Processing sensor array data payload...");
+    for (auto& s : sensors) {
+        std::vector<float> readings = s->getReadingOnce();
+        for (size_t i = 0; i < readings.size(); i++) {
+            mqttPub->publishFloat(s->name.c_str(), s->getMeasurements()[i].c_str(), readings[i], 0, 0);
+            ESP_LOGI("MainLog", "Published %s: %f", s->name.c_str(), readings[i]);
+        }
+    }
+
+    // 6. Give the network stack a brief window to flush TCP packets out into the air.
+    // If sleep instantly, the radio shuts down mid-transmission.
+    vTaskDelay(pdMS_TO_TICKS(1500)); 
+
+    // 7. Clean up connections elegantly
+    mqttPub.reset();
+    esp_wifi_stop(); 
+
+    // 8. Go to Sleep
+    ESP_LOGI("MainLog", "Entering Deep Sleep mode for %d seconds...", DATA_PUBLISH_INTERVAL_NORMAL_S);
+    
+    // Configure timer (Convert seconds to microseconds), ULL means unsigned long long to prevent overflow
+    esp_sleep_enable_timer_wakeup(DATA_PUBLISH_INTERVAL_NORMAL_S * 1000000ULL);
+    
+    // Power down completely
+    esp_deep_sleep_start();
+
+    // The CPU shuts off right here. This line will never be reached!
 }

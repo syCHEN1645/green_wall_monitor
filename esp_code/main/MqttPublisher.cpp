@@ -39,6 +39,11 @@ MqttPublisher::MqttPublisher() {
         this
     );
     esp_mqtt_client_start(client);
+    ESP_LOGI(TAG, "Waiting for secure broker handshake...");
+    while (!connected) {
+        vTaskDelay(pdMS_TO_TICKS(50)); 
+    }
+    ESP_LOGI(TAG, "Broker link established successfully inside constructor.");
 }
 
 MqttPublisher::~MqttPublisher() {
