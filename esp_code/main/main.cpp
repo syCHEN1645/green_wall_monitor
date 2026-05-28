@@ -28,6 +28,18 @@ std::unique_ptr<MqttPublisher> mqttPub;
 
 std::vector<std::unique_ptr<SensorDevice>> sensors;
 
+// fixed size of 8 (MEASUREMENT COUNT)
+const std::vector<std::string> measurement_names = {
+    SENSOR_NAME_1 "/" SENSOR_MEASUREMENT_AIR_TEMP,
+    SENSOR_NAME_1 "/" SENSOR_MEASUREMENT_AIR_HUMIDITY,
+    SENSOR_NAME_2 "/" SENSOR_MEASUREMENT_WALL_TEMP,
+    SENSOR_NAME_3 "/" SENSOR_MEASUREMENT_WALL_TEMP,
+    SENSOR_NAME_4 "/" SENSOR_MEASUREMENT_SOIL_MOISTURE,
+    SENSOR_NAME_5 "/" SENSOR_MEASUREMENT_AIR_TEMP,
+    SENSOR_NAME_5 "/" SENSOR_MEASUREMENT_AIR_HUMIDITY,
+    PLACEHOLDER
+};
+
 void initialiseHardware() {
     if (i2cdev_init() != ESP_OK) {
         ESP_LOGE("HardwareInit", "Error initializing I2C");
@@ -44,56 +56,51 @@ void initialiseHardware() {
     if (err != ESP_OK) {
         ESP_LOGE("HardwareInit", "Failed to initialize ADC unit %d: %s", ADC_UNIT_1, esp_err_to_name(err));
     }
-    ESP_LOGI("HardwareInit", "Initialized ADC");   
+    ESP_LOGI("HardwareInit", "Initialized ADC");
 }
 
 void initialiseSensor() {
     // Use make_unique to manage memory automatically
-    std::string sensor_name_1 = "air-temp-1";
-    auto sensor_1 = std::make_unique<SEN0385Device>(sensor_name_1, CONFIG_SEN0385_I2C_ADDR);
+    auto sensor_1 = std::make_unique<SEN0385Device>(SENSOR_NAME_1, CONFIG_SEN0385_I2C_ADDR);
     int args_1[] = {CONFIG_SEN0385_1_SDA_PIN, CONFIG_SEN0385_1_SCL_PIN, int(I2C_NUM_0)};
     if (sensor_1->setupSensor(args_1) == ESP_OK) {
         sensors.push_back(std::move(sensor_1));
     } else {
-        ESP_LOGE("SensorInit", "Failed to initialize %s sensor", sensor_name_1.c_str());
+        ESP_LOGE("SensorInit", "Failed to initialize %s sensor", SENSOR_NAME_1);
     }
 
-    std::string sensor_name_2 = "wall-temp-1";
-    auto sensor_2 = std::make_unique<DS18B20Device>(sensor_name_2);
+    auto sensor_2 = std::make_unique<DS18B20Device>(SENSOR_NAME_2);
     int args_2[] = {CONFIG_DS18B20_1_PIN};
     if (sensor_2->setupSensor(args_2) == ESP_OK) {
         sensors.push_back(std::move(sensor_2));
     } else {
-        ESP_LOGE("SensorInit", "Failed to initialize %s sensor", sensor_name_2.c_str());
+        ESP_LOGE("SensorInit", "Failed to initialize %s sensor", SENSOR_NAME_2);
     }
 
-    std::string sensor_name_3 = "wall-temp-2";
-    auto sensor_3 = std::make_unique<DS18B20Device>(sensor_name_3);
+    auto sensor_3 = std::make_unique<DS18B20Device>(SENSOR_NAME_3);
     int args_3[] = {CONFIG_DS18B20_2_PIN};
     if (sensor_3->setupSensor(args_3) == ESP_OK) {
         sensors.push_back(std::move(sensor_3));
     } else {
-        ESP_LOGE("SensorInit", "Failed to initialize %s sensor", sensor_name_3.c_str());
+        ESP_LOGE("SensorInit", "Failed to initialize %s sensor", SENSOR_NAME_3);
     }
 
-    std::string sensor_name_4 = "soil-moisture-1";
-    auto sensor_4 = std::make_unique<SEN0308Device>(sensor_name_4, adc_handle);
+    auto sensor_4 = std::make_unique<SEN0308Device>(SENSOR_NAME_4, adc_handle);
     int args_4[] = {CONFIG_SEN0308_ADC_CHANNEL};
     // sensor_4->setupSensor(args_4);
     if (sensor_4->setupSensor(args_4) == ESP_OK) {
         // after running this, sensor_4 points to null, avoid using it after this
         sensors.push_back(std::move(sensor_4));
     } else {
-        ESP_LOGE("SensorInit", "Failed to initialize %s sensor", sensor_name_4.c_str());
+        ESP_LOGE("SensorInit", "Failed to initialize %s sensor", SENSOR_NAME_4);
     }
 
-    std::string sensor_name_5 = "air-temp-2";
-    auto sensor_5 = std::make_unique<SEN0385Device>(sensor_name_5, CONFIG_SEN0385_I2C_ADDR);
+    auto sensor_5 = std::make_unique<SEN0385Device>(SENSOR_NAME_5, CONFIG_SEN0385_I2C_ADDR);
     int args_5[] = {CONFIG_SEN0385_2_SDA_PIN, CONFIG_SEN0385_2_SCL_PIN, int(I2C_NUM_1)};
     if (sensor_5->setupSensor(args_5) == ESP_OK) {
         sensors.push_back(std::move(sensor_5));
     } else {
-        ESP_LOGE("SensorInit", "Failed to initialize %s sensor", sensor_name_5.c_str());
+        ESP_LOGE("SensorInit", "Failed to initialize %s sensor", SENSOR_NAME_5);
     }
 
 }
