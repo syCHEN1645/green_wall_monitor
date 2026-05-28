@@ -10,7 +10,7 @@
 const char* DS18B20Device::TAG = "DS18B20_Sensor";
 
 const std::vector<std::string> DS18B20Device::measurements = {
-    SENSOR_MEASUREMENT_AIR_TEMP
+    SENSOR_MEASUREMENT_WALL_TEMP
 };
 
 DS18B20Device::DS18B20Device(std::string name)
@@ -30,6 +30,11 @@ DS18B20Device::~DS18B20Device()
         onewire_bus_del(bus_handle);
         bus_handle = nullptr;
     }
+}
+
+const std::vector<std::string>& DS18B20Device::getMeasurements() const
+{
+    return this->measurements;
 }
 
 // Assign the bus and sensor handles

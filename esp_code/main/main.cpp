@@ -58,23 +58,23 @@ void initialiseSensor() {
         ESP_LOGE("SensorInit", "Failed to initialize %s sensor", sensor_name_1.c_str());
     }
 
-    // std::string sensor_name_2 = "water-temp-1";
-    // auto sensor_2 = std::make_unique<DS18B20Device>(sensor_name_2);
-    // int args_2[] = {CONFIG_DS18B20_1_PIN};
-    // if (sensor_2->setupSensor(args_2) == ESP_OK) {
-    //     sensors.push_back(std::move(sensor_2));
-    // } else {
-    //     ESP_LOGE("SensorInit", "Failed to initialize %s sensor", sensor_name_2.c_str());
-    // }
+    std::string sensor_name_2 = "wall-temp-1";
+    auto sensor_2 = std::make_unique<DS18B20Device>(sensor_name_2);
+    int args_2[] = {CONFIG_DS18B20_1_PIN};
+    if (sensor_2->setupSensor(args_2) == ESP_OK) {
+        sensors.push_back(std::move(sensor_2));
+    } else {
+        ESP_LOGE("SensorInit", "Failed to initialize %s sensor", sensor_name_2.c_str());
+    }
 
-    // std::string sensor_name_3 = "water-temp-2";
-    // auto sensor_3 = std::make_unique<DS18B20Device>(sensor_name_3);
-    // int args_3[] = {CONFIG_DS18B20_2_PIN};
-    // if (sensor_3->setupSensor(args_3) == ESP_OK) {
-    //     sensors.push_back(std::move(sensor_3));
-    // } else {
-    //     ESP_LOGE("SensorInit", "Failed to initialize %s sensor", sensor_name_3.c_str());
-    // }
+    std::string sensor_name_3 = "wall-temp-2";
+    auto sensor_3 = std::make_unique<DS18B20Device>(sensor_name_3);
+    int args_3[] = {CONFIG_DS18B20_2_PIN};
+    if (sensor_3->setupSensor(args_3) == ESP_OK) {
+        sensors.push_back(std::move(sensor_3));
+    } else {
+        ESP_LOGE("SensorInit", "Failed to initialize %s sensor", sensor_name_3.c_str());
+    }
 
     std::string sensor_name_4 = "soil-moisture-1";
     auto sensor_4 = std::make_unique<SEN0308Device>(sensor_name_4, adc_handle);
