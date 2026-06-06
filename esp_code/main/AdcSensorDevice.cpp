@@ -16,7 +16,8 @@ AdcSensorDevice::AdcSensorDevice(std::string name, adc_oneshot_unit_handle_t adc
     this->adc_handle = adc_handle;
 }
 
-esp_err_t AdcSensorDevice::setupSensor(int gpio_pins[]) {
+esp_err_t AdcSensorDevice::setupSensor(int gpio_pins[], size_t measurement_indices[]) {
+    this->measurement_indices = measurement_indices;
     this->adc_channel = static_cast<adc_channel_t>(gpio_pins[0]);
     // ADC channel configuration
     adc_oneshot_chan_cfg_t channel_config = {

@@ -13,7 +13,7 @@ class AdcSensorDevice : public SensorDevice
 public:
 	AdcSensorDevice(std::string name, adc_oneshot_unit_handle_t adc_handle);
 
-	esp_err_t setupSensor(int gpio_pins[]) override;
+	esp_err_t setupSensor(int gpio_pins[], size_t measurement_indices[]) override;
 	virtual float parseAdcValue(int raw_value);
 	std::vector<float> getReadingOnce() override;
 	virtual const std::vector<std::string>& getMeasurements() const override;

@@ -38,8 +38,9 @@ const std::vector<std::string>& DS18B20Device::getMeasurements() const
 }
 
 // Assign the bus and sensor handles
-esp_err_t DS18B20Device::setupSensor(int gpio_pin[])
+esp_err_t DS18B20Device::setupSensor(int gpio_pin[], size_t measurement_indices[])
 {
+    this->measurement_indices = measurement_indices;
     onewire_bus_config_t bus_config = {
         .bus_gpio_num = gpio_pin[0],
         .flags = {

@@ -132,3 +132,19 @@ void MqttPublisher::publishFloat(const char* sensor, const char* measurement, fl
         ESP_LOGE(TAG, "Publish failed");
     }
 }
+
+void MqttPublisher::publishLineProtocol(const char* topic, const char* payload, int qos, int retain) {
+    if (!client) {
+        ESP_LOGE(TAG, "MQTT client is not initialized");
+        return;
+    }
+    if (!connected) {
+        ESP_LOGW(TAG, "Skip publish while MQTT disconnected");
+        return;
+    }
+
+    int msg_id = esp_mqtt_client_publish(client, topic, payload, 0, qos, retain);
+    if (msg_id < 0) {
+        ESP_LOGE(TAG, "Publish failed");
+    }
+}

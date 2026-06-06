@@ -19,6 +19,19 @@ class RtcMemManager {
 public:
     RtcMemManager() {}
 
+    bool saveToRtc(RtcData& data) {
+        // if buffer not full, save data to RTC memory
+        if (rtcDataCount < RTC_BUFFER_NUM) {
+            rtcDataBuffer[rtcDataCount] = data;
+            rtcDataCount++;
+            ESP_LOGI("RTC", "RTC buffer usage: %d out of %d, data saved", rtcDataCount, RTC_BUFFER_NUM);
+            return true;
+        } else {
+            ESP_LOGI("RTC", "RTC buffer full %d, send out all existing data", rtcDataCount);
+            return false;
+        }
+    }
+
     bool saveToRtc(float readings[MEASUREMENT_COUNT], uint64_t timestamp) {
         // if buffer not full, save data to RTC memory
         if (rtcDataCount < RTC_BUFFER_NUM) {
@@ -37,5 +50,9 @@ public:
 
     void resetRtcBuffer() {
         rtcDataCount = 0;
+    }
+
+    bool isBufferFull() {
+        return rtcDataCount >= RTC_BUFFER_NUM;
     }
 };

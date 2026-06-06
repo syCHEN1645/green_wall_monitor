@@ -30,8 +30,10 @@ SEN0385Device::~SEN0385Device()
     }
 }
 
-esp_err_t SEN0385Device::setupSensor(int gpio_pins[])
+esp_err_t SEN0385Device::setupSensor(int gpio_pins[], size_t measurement_indices[])
 {
+    // temperature, humidity
+    this->measurement_indices = measurement_indices;
     // Initialize the SHT3x sensor
     // GPIO pins: 0 SDA, 1 SCK, 2 port
     memset(&this->dev, 0, sizeof(sht3x_t));
