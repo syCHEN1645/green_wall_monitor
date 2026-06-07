@@ -48,11 +48,19 @@ public:
         }
     }
 
-    void resetRtcBuffer() {
+    void resetRtcBuffer() const {
         rtcDataCount = 0;
     }
 
-    bool isBufferFull() {
+    bool isBufferFull() const {
         return rtcDataCount >= RTC_BUFFER_NUM;
+    }
+
+    const RtcData* getRtcDataBuffer() const {
+        return rtcDataBuffer;
+    }
+
+    size_t getRtcDataCount() const {
+        return rtcDataCount;
     }
 };

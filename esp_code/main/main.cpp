@@ -31,15 +31,27 @@ std::unique_ptr<RtcMemManager> rtcMemManager;
 
 std::vector<std::unique_ptr<SensorDevice>> sensors;
 
+// TODO: test
 // fixed size of 8 (MEASUREMENT COUNT) in data region
+// inline constexpr const char* measurement_names[MEASUREMENT_COUNT] = {
+//     SENSOR_NAME_1 "/" SENSOR_MEASUREMENT_AIR_TEMP,
+//     SENSOR_NAME_1 "/" SENSOR_MEASUREMENT_AIR_HUMIDITY,
+//     SENSOR_NAME_2 "/" SENSOR_MEASUREMENT_WALL_TEMP,
+//     SENSOR_NAME_3 "/" SENSOR_MEASUREMENT_WALL_TEMP,
+//     SENSOR_NAME_4 "/" SENSOR_MEASUREMENT_SOIL_MOISTURE,
+//     SENSOR_NAME_5 "/" SENSOR_MEASUREMENT_AIR_TEMP,
+//     SENSOR_NAME_5 "/" SENSOR_MEASUREMENT_AIR_HUMIDITY,
+//     PLACEHOLDER
+// };
+
 inline constexpr const char* measurement_names[MEASUREMENT_COUNT] = {
-    SENSOR_NAME_1 "/" SENSOR_MEASUREMENT_AIR_TEMP,
-    SENSOR_NAME_1 "/" SENSOR_MEASUREMENT_AIR_HUMIDITY,
-    SENSOR_NAME_2 "/" SENSOR_MEASUREMENT_WALL_TEMP,
-    SENSOR_NAME_3 "/" SENSOR_MEASUREMENT_WALL_TEMP,
-    SENSOR_NAME_4 "/" SENSOR_MEASUREMENT_SOIL_MOISTURE,
-    SENSOR_NAME_5 "/" SENSOR_MEASUREMENT_AIR_TEMP,
-    SENSOR_NAME_5 "/" SENSOR_MEASUREMENT_AIR_HUMIDITY,
+    "dummy1",
+    "dummy2",
+    "dummy3",
+    PLACEHOLDER,
+    PLACEHOLDER,
+    PLACEHOLDER,
+    PLACEHOLDER,
     PLACEHOLDER
 };
 
@@ -66,73 +78,74 @@ void initialiseHardware() {
 }
 
 void initialiseSensor() {
+    // TODO: test
     // Use make_unique to manage memory automatically
 
     // sensor 1: SEN0385
-    {
-        auto sensor = std::make_unique<SEN0385Device>(SENSOR_NAME_1, CONFIG_SEN0385_I2C_ADDR);
-        int gpio_pins[] = {CONFIG_SEN0385_1_SDA_PIN, CONFIG_SEN0385_1_SCL_PIN, int(I2C_NUM_0)};
-        // refer to measurement_names array indices
-        size_t measurement_indices[] = {0, 1};
-        if (sensor->setupSensor(gpio_pins, measurement_indices) == ESP_OK) {
-            sensors.push_back(std::move(sensor));
-        } else {
-            ESP_LOGE("SensorInit", "Failed to initialize %s sensor", SENSOR_NAME_1);
-        }
-    }
+    // {
+    //     auto sensor = std::make_unique<SEN0385Device>(SENSOR_NAME_1, CONFIG_SEN0385_I2C_ADDR);
+    //     int gpio_pins[] = {CONFIG_SEN0385_1_SDA_PIN, CONFIG_SEN0385_1_SCL_PIN, int(I2C_NUM_0)};
+    //     // refer to measurement_names array indices
+    //     size_t measurement_indices[] = {0, 1};
+    //     if (sensor->setupSensor(gpio_pins, measurement_indices) == ESP_OK) {
+    //         sensors.push_back(std::move(sensor));
+    //     } else {
+    //         ESP_LOGE("SensorInit", "Failed to initialize %s sensor", SENSOR_NAME_1);
+    //     }
+    // }
 
-    // sensor 2: DS18B20
-    {
-        auto sensor = std::make_unique<DS18B20Device>(SENSOR_NAME_2);
-        int gpio_pins[] = {CONFIG_DS18B20_1_PIN};
-        // refer to measurement_names array indices
-        size_t measurement_indices[] = {2};
-        if (sensor->setupSensor(gpio_pins, measurement_indices) == ESP_OK) {
-            sensors.push_back(std::move(sensor));
-        } else {
-            ESP_LOGE("SensorInit", "Failed to initialize %s sensor", SENSOR_NAME_2);
-        }
-    }
+    // // sensor 2: DS18B20
+    // {
+    //     auto sensor = std::make_unique<DS18B20Device>(SENSOR_NAME_2);
+    //     int gpio_pins[] = {CONFIG_DS18B20_1_PIN};
+    //     // refer to measurement_names array indices
+    //     size_t measurement_indices[] = {2};
+    //     if (sensor->setupSensor(gpio_pins, measurement_indices) == ESP_OK) {
+    //         sensors.push_back(std::move(sensor));
+    //     } else {
+    //         ESP_LOGE("SensorInit", "Failed to initialize %s sensor", SENSOR_NAME_2);
+    //     }
+    // }
 
-    // sensor 3: DS18B20
-    {
-        auto sensor = std::make_unique<DS18B20Device>(SENSOR_NAME_3);
-        int gpio_pins[] = {CONFIG_DS18B20_2_PIN};
-        // refer to measurement_names array indices
-        size_t measurement_indices[] = {3};
-        if (sensor->setupSensor(gpio_pins, measurement_indices) == ESP_OK) {
-            sensors.push_back(std::move(sensor));
-        } else {
-            ESP_LOGE("SensorInit", "Failed to initialize %s sensor", SENSOR_NAME_3);
-        }
-    }
+    // // sensor 3: DS18B20
+    // {
+    //     auto sensor = std::make_unique<DS18B20Device>(SENSOR_NAME_3);
+    //     int gpio_pins[] = {CONFIG_DS18B20_2_PIN};
+    //     // refer to measurement_names array indices
+    //     size_t measurement_indices[] = {3};
+    //     if (sensor->setupSensor(gpio_pins, measurement_indices) == ESP_OK) {
+    //         sensors.push_back(std::move(sensor));
+    //     } else {
+    //         ESP_LOGE("SensorInit", "Failed to initialize %s sensor", SENSOR_NAME_3);
+    //     }
+    // }
 
-    // sensor 4: SEN0308
-    {
-        auto sensor = std::make_unique<SEN0308Device>(SENSOR_NAME_4, adc_handle);
-        int gpio_pins[] = {CONFIG_SEN0308_ADC_CHANNEL};
-        // refer to measurement_names array indices
-        size_t measurement_indices[] = {4};
-        if (sensor->setupSensor(gpio_pins, measurement_indices) == ESP_OK) {
-            // after running this, sensor points to null, avoid using it after this
-            sensors.push_back(std::move(sensor));
-        } else {
-            ESP_LOGE("SensorInit", "Failed to initialize %s sensor", SENSOR_NAME_4);
-        }
-    }
+    // // sensor 4: SEN0308
+    // {
+    //     auto sensor = std::make_unique<SEN0308Device>(SENSOR_NAME_4, adc_handle);
+    //     int gpio_pins[] = {CONFIG_SEN0308_ADC_CHANNEL};
+    //     // refer to measurement_names array indices
+    //     size_t measurement_indices[] = {4};
+    //     if (sensor->setupSensor(gpio_pins, measurement_indices) == ESP_OK) {
+    //         // after running this, sensor points to null, avoid using it after this
+    //         sensors.push_back(std::move(sensor));
+    //     } else {
+    //         ESP_LOGE("SensorInit", "Failed to initialize %s sensor", SENSOR_NAME_4);
+    //     }
+    // }
 
-    // sensor 5: SEN0385
-    {
-        auto sensor = std::make_unique<SEN0385Device>(SENSOR_NAME_5, CONFIG_SEN0385_I2C_ADDR);
-        int gpio_pins[] = {CONFIG_SEN0385_2_SDA_PIN, CONFIG_SEN0385_2_SCL_PIN, int(I2C_NUM_1)};
-        // refer to measurement_names array indices
-        size_t measurement_indices[] = {5, 6};
-        if (sensor->setupSensor(gpio_pins, measurement_indices) == ESP_OK) {
-            sensors.push_back(std::move(sensor));
-        } else {
-            ESP_LOGE("SensorInit", "Failed to initialize %s sensor", SENSOR_NAME_5);
-        }
-    }
+    // // sensor 5: SEN0385
+    // {
+    //     auto sensor = std::make_unique<SEN0385Device>(SENSOR_NAME_5, CONFIG_SEN0385_I2C_ADDR);
+    //     int gpio_pins[] = {CONFIG_SEN0385_2_SDA_PIN, CONFIG_SEN0385_2_SCL_PIN, int(I2C_NUM_1)};
+    //     // refer to measurement_names array indices
+    //     size_t measurement_indices[] = {5, 6};
+    //     if (sensor->setupSensor(gpio_pins, measurement_indices) == ESP_OK) {
+    //         sensors.push_back(std::move(sensor));
+    //     } else {
+    //         ESP_LOGE("SensorInit", "Failed to initialize %s sensor", SENSOR_NAME_5);
+    //     }
+    // }
 }
 
 void initialiseWiFi() {
@@ -175,7 +188,7 @@ extern "C" void app_main(void) {
     // 2. Fire up essential hardware and sensors
     initialiseHardware();
     // check wakeup cause, if first time boot up, set buffer size to 0
-    if (esp_sleep_get_wakeup_causes() == ESP_SLEEP_WAKEUP_UNDEFINED) {
+    if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_UNDEFINED) {
         ESP_LOGI("MainLog", "Cold boot detected. Resetting RTC memory tracking index...");
         rtcMemManager->resetRtcBuffer(); // Clear residual RAM garbage safely
     }
@@ -195,8 +208,8 @@ extern "C" void app_main(void) {
 
         // Send data in RTC buffer one by one, then reset buffer
         // Each one struct is the max 8 data points read at around the same time
-        for (size_t i = 0; i < rtcDataCount; i++) {
-            RtcData& data = rtcDataBuffer[i];
+        for (size_t i = 0; i < rtcMemManager->getRtcDataCount(); i++) {
+            const RtcData& data = rtcMemManager->getRtcDataBuffer()[i];
             // convert seconds to nanoseconds to match influxdb line protocol format
             uint64_t timestamp = data.timestamp * 1000000000ULL;
             for (size_t j = 0; j < MEASUREMENT_COUNT; j++) {
@@ -214,7 +227,7 @@ extern "C" void app_main(void) {
                         data.sensor_readings[j],
                         timestamp
                     );
-                    // mqttPub->publishLineProtocol(topic_name, payload, 0, 0);
+                    mqttPub->publishLineProtocol(topic_name, payload, 0, 0);
                     ESP_LOGI("MainLog", "Published %s: %s", topic_name, payload);
                 }
             }
@@ -238,25 +251,30 @@ extern "C" void app_main(void) {
         data.sensor_readings[i] = BAD_READING;
     }
 
-    for (auto& s : sensors) {
-        // each sensor may have multiple measurements
-        std::vector<float> readings = s->getReadingOnce();
-        for (size_t i = 0; i < readings.size(); i++) {
-            // save data into RTC data struct
-            std::string str = s->name.c_str() + std::string("/") + s->getMeasurements()[i].c_str();
-            for (size_t k = 0; k < MEASUREMENT_COUNT; k++) {
-                if (str == measurement_names[k]) {
-                    data.sensor_readings[k] = readings[i];
-                    ESP_LOGI("MainLog", "Saved %s: %f", str.c_str(), readings[i]);
-                    break;
-                }
-                // did not match any measurement name
-                if (k == MEASUREMENT_COUNT - 1) {
-                    ESP_LOGW("MainLog", "Measurement name %s not found in buffer", str.c_str());
-                }
-            }
-        }
-    }
+    // for (auto& s : sensors) {
+    //     TODO: test
+    //     each sensor may have multiple measurements
+    //     std::vector<float> readings = s->getReadingOnce();
+    //     for (size_t i = 0; i < readings.size(); i++) {
+    //         // save data into RTC data struct
+    //         std::string str = s->name.c_str() + std::string("/") + s->getMeasurements()[i].c_str();
+    //         for (size_t k = 0; k < MEASUREMENT_COUNT; k++) {
+    //             if (str == measurement_names[k]) {
+    //                 data.sensor_readings[k] = readings[i];
+    //                 ESP_LOGI("MainLog", "Saved %s: %f", str.c_str(), readings[i]);
+    //                 break;
+    //             }
+    //             // did not match any measurement name
+    //             if (k == MEASUREMENT_COUNT - 1) {
+    //                 ESP_LOGW("MainLog", "Measurement name %s not found in buffer", str.c_str());
+    //             }
+    //         }
+    //     }
+    // }
+    for (int i = 0; i < 3; i++) {
+        uint64_t dummy_data = (data.timestamp / 60) % 60 * (i + 1);
+        data.sensor_readings[i] = static_cast<float>(dummy_data);
+    }    
     // save data to RTC memory buffer
     if (!rtcMemManager->saveToRtc(data)) {
         ESP_LOGW("MainLog", "Fail to save to RTC buffer");
