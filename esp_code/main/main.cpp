@@ -262,7 +262,7 @@ extern "C" void app_main(void) {
                 // skip all bad readings
                 if (data.sensor_readings[j] != BAD_READING) {
                     char topic_name[64];
-                    snprintf(topic_name, sizeof(topic_name), "greenwall-test/%s", measurement_names[j]);
+                    snprintf(topic_name, sizeof(topic_name), "greenwall/%s", measurement_names[j]);
                     char payload[128];
                     // format: measurement_name,<tag_key>=<tag_val> <value_key>=<value_val> timestamp
                     snprintf(
