@@ -327,7 +327,7 @@ extern "C" void app_main(void) {
     }
 
     // 4. Go to sleep, sleep interval depends on time of the day
-    ESP_LOGI("MainLog", "Entering Deep Sleep mode for %d seconds...", DATA_PUBLISH_INTERVAL_NORMAL_S);
+    // ESP_LOGI("MainLog", "Entering Deep Sleep mode for %d seconds...", DATA_PUBLISH_INTERVAL_NORMAL_S);
     
     setenv("TZ", TIMEZONE, 1); 
     tzset();
