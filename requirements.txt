@@ -1,0 +1,4 @@
+streamlit>=1.30.0
+influxdb-client>=1.36.0
+matplotlib>=3.8.0
+tzdata>=2023.3
