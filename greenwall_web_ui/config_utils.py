@@ -6,12 +6,12 @@ DO_NAME = "DO"
 ORP_NAME = "ORP"
 
 CONFIG_FILENAME_LOOKUP = {
-    PH_NAME: "config/sen0169_config.json",
-    DO_NAME: "config/sen0237_config.json",
-    ORP_NAME: "config/sen0464_config.json"
+    PH_NAME: "water_treatment/post_processing/config/sen0169_config.json",
+    DO_NAME: "water_treatment/post_processing/config/sen0237_config.json",
+    ORP_NAME: "water_treatment/post_processing/config/sen0464_config.json"
 }
 
-PARENT_DIR = pathlib.Path(__file__).parent.resolve()
+PROJECT_DIR = pathlib.Path(__file__).parent.parent.resolve()
 
 def load_config(sensor_name: str):
     """Load configuration for a given sensor from its JSON file.
@@ -26,9 +26,9 @@ def load_config(sensor_name: str):
     if filename is None:
         raise ValueError(f"This sensor does not exist or does not have a config file: {sensor_name}")
     
-    config_file = PARENT_DIR / filename
+    config_file = PROJECT_DIR / filename
     if not config_file.exists():
-        raise ValueError(f"No configuration file found for sensor: {sensor_name}")
+        raise ValueError(f"No configuration file found for sensor {sensor_name} at {config_file}")
     
     with open(config_file, "r") as f:
         return json.load(f)
@@ -44,11 +44,12 @@ def save_config(sensor_name: str, config_data: dict):
     if filename is None:
         raise ValueError(f"This sensor does not exist or does not have a config file: {sensor_name}")
     
-    config_file = PARENT_DIR / filename
+    config_file = PROJECT_DIR / filename
     if not config_file.exists():
-        raise ValueError(f"No configuration file found for sensor: {sensor_name}")
+        raise ValueError(f"No configuration file found for sensor {sensor_name} at {config_file}")
     with open(config_file, "w") as f:
         json.dump(config_data, f, indent=4)
+        print("New configuration saved successfully.")
 
 def get_config_value(sensor_name: str, config_name: str):
     """Retrieve a configuration value from the JSON file of the sensor.
@@ -62,9 +63,9 @@ def get_config_value(sensor_name: str, config_name: str):
         raise ValueError(f"This sensor does not exist or does not have a config file: {sensor_name}")
     
     # / is similar to os.path.join, it joins the parent directory with the filename in pathlib
-    config_file = PARENT_DIR / filename
+    config_file = PROJECT_DIR / filename
     if not config_file.exists():
-        raise ValueError(f"No configuration file found for sensor: {sensor_name}")
+        raise ValueError(f"No configuration file found for sensor {sensor_name} at {config_file}")
     
     with open(config_file, "r") as f:
         config_data = json.load(f)
@@ -88,9 +89,9 @@ def set_config_value(sensor_name: str, config_name: str, config_value):
         raise ValueError(f"This sensor does not exist or does not have a config file: {sensor_name}")
     
     # check config file exists
-    config_file = PARENT_DIR / filename
+    config_file = PROJECT_DIR / filename
     if not config_file.exists():
-        raise ValueError(f"No configuration file found for sensor: {sensor_name}")
+        raise ValueError(f"No configuration file found for sensor {sensor_name} at {config_file}")
     
     with open(config_file, "r") as f:
         config_data = json.load(f)
