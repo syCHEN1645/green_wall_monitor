@@ -1,0 +1,32 @@
+{
+    "sensor_model_name": {
+        "val": "SEN0464",
+        "type": "str",
+        "write": false
+    },
+    "sensor_model_id": {
+        "val": 1,
+        "type": "int",
+        "write": false
+    },
+    "sensor_name": {
+        "val": "ORP-sensor",
+        "type": "str",
+        "write": true
+    },
+    "sensor_id": {
+        "val": 1,
+        "type": "int",
+        "write": false
+    },
+    "zero_point_offset": {
+        "val": 0,
+        "type": "int",
+        "write": true
+    },
+    "zero_point_mv": {
+        "val": 2480,
+        "type": "int",
+        "write": false
+    }
+}

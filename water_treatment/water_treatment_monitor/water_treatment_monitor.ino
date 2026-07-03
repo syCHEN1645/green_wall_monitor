@@ -12,7 +12,7 @@
 #define PH_PIN 27
 #define PH_LED_PIN 13
 
-// reference volage (5V for Uno)
+// reference volage (5000mV for Uno)
 #define VREF 5000
 // adc resolution (Uno is by default 10-bit 1024)
 #define ADC_RES 1024

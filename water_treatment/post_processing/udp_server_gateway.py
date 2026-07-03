@@ -10,13 +10,12 @@ from config.general_config import LOCAL_IP, UDP_GATEWAY_PORT, UDP_BUFFER_SIZE, U
 
 CONFIG_FILE = "config/general_config.json"
 
-influx_client = None
 # sockets, AF_INET is ipv4, SOCK_DGRAM is udp
 s_rx = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s_tx = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 def start_up() -> bool:
-    global s_rx, s_tx
+    global s_rx
     try:
         s_rx.bind(("0.0.0.0", UDP_GATEWAY_PORT))
         print(f"Listening for Uno on port {UDP_GATEWAY_PORT}")
@@ -24,9 +23,7 @@ def start_up() -> bool:
         print(f"Error starting UDP server: {e}")
         return False
 
-    if influx_client is not None:
-        return True
-    return False
+    return True
 
 def main():
     if not start_up():
@@ -34,7 +31,6 @@ def main():
         sys.exit()
 
     # main program loop starts here
-    assert influx_client is not None
     assert s_rx is not None
     assert s_tx is not None
 
@@ -47,16 +43,18 @@ def main():
                 payload = data.decode("utf-8")
                 print(f"[From {addr[0]} received: {payload}]")
 
-                # TODO
-                is_data = True
-                # only forward data packets to web_ui, ignore handshake packets
-                if is_data:
-                    # forward to web ui for display
-                    try:
-                        s_tx.sendto(data, (LOCAL_IP, UDP_WEB_UI_PORT))
-                    except Exception as e:
-                        # ignore if web ui is not running
-                        pass
+                # forward to web ui for display
+                try:
+                    s_tx.sendto(data, (LOCAL_IP, UDP_WEB_UI_PORT))
+                except Exception as e:
+                    # ignore if web ui is not running
+                    pass
+
+                try:
+                    s_tx.sendto(data, (LOCAL_IP, UDP_PROCESSING_PORT))
+                except Exception as e:
+                    # ignore if processing is not running
+                    pass
             
             except Exception as e:
                 print(f"Error during listening: {e}")

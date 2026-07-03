@@ -5,7 +5,8 @@ from influxdb_client.client.influxdb_client import InfluxDBClient
 from influxdb_client.client.write.point import Point
 from influxdb_client.client.write_api import SYNCHRONOUS
 
-import sen0237_calibration
+from sen0237_calibration import process_do_reading
+from sen0464_calibration import process_orp_reading
 from config.general_config import SENSOR_TYPES, LOCAL_IP, UDP_PROCESSING_PORT, UDP_BUFFER_SIZE, INFLUXDB_URL, INFLUXDB_TOKEN, INFLUXDB_ORG, INFLUXDB_BUCKET
 
 """
@@ -76,11 +77,10 @@ def main():
                 raise ValueError(f"Invalid sensor type ID: {sensor_type_id}")
             
             if sensor_type_id == SENSOR_TYPES["DO"]:
-                # processed_reading = sen0237_calibration.process_do_reading(reading)
-                processed_reading = 1.0
+                processed_reading = process_do_reading(float(reading))
                 measurement_name = "DO"
             elif sensor_type_id == SENSOR_TYPES["ORP"]:
-                processed_reading = 1.0
+                processed_reading = process_orp_reading(float(reading))
                 measurement_name = "ORP"
             elif sensor_type_id == SENSOR_TYPES["PH"]:
                 processed_reading = 1.0
@@ -91,6 +91,7 @@ def main():
             # write to InfluxDB
             point = (
                 Point("water_treatment")
+                .measurement("water_treatment")
                 .field(measurement_name, processed_reading)
             )
             write_api.write(bucket=INFLUXDB_BUCKET, org=INFLUXDB_ORG, record=point)
