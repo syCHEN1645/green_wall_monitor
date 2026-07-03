@@ -1,7 +1,12 @@
 {
-    "sensor_model": {
+    "sensor_model_name": {
         "val": "SEN0237",
         "type": "str",
+        "write": false
+    },
+    "sensor_model_id": {
+        "val": 2,
+        "type": "int",
         "write": false
     },
     "sensor_name": {

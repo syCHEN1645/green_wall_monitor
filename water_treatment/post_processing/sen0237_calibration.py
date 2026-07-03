@@ -16,26 +16,21 @@ def load_sen0237_config():
 
 def process_do_reading(
     voltage_mv: int,
-    temperature_c: int,
-) -> int:
+) -> float:
     """Compute dissolved oxygen from sensor voltage and temperature.
 
     Args:
     voltage_mv: Sensor voltage in millivolts.
-    temperature_c: Water temperature in Celsius.
-    cal1_v: Calibration voltage point 1.
-    cal1_t: Calibration temperature point 1.
-    cal2_v: Calibration voltage point 2 (required for two-point mode).
-    cal2_t: Calibration temperature point 2 (required for two-point mode).
 
     Returns:
-    Dissolved oxygen value as integer (same style as Arduino integer math).
+    Dissolved oxygen value as float.
     """
     # load config if config is none
     global DO_CONFIG
     if DO_CONFIG is None:
         DO_CONFIG = load_sen0237_config()
- 
+    assert isinstance(DO_CONFIG, dict)
+
     do_lookup_table = DO_CONFIG.get("do_lookup_table")
     # Two-point calibration mode flag from original code.
     # 1 -> one-point formula, 2 -> two-point formula.

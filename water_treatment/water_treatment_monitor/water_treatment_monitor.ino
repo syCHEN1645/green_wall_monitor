@@ -1,9 +1,11 @@
 // This code runs on an Arduino Uno R4 board
 #include <Arduino.h>
+#include <map>
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <ArduinoJson.h>
-#include <DFRobot_ORP_PRO.h>
+
+#include <config.h>
 
 #define DO_PIN 25
 #define ORP_PIN 26
@@ -17,7 +19,7 @@
 
 #define SSID "ssid"
 #define PASSWORD "pswd"
-#define SERVER_IP "1.2.3.4"
+#define SERVER_IP "192.168.1.6"
 #define UDP_PORT 5005
 
 #define SAMPLE_SIZE 40
@@ -28,8 +30,14 @@ float ph_adc_val;
 float do_adc_val;
 float orp_adc_val;
 
+// sensor types:
+std::map<String, int> SENSOR_TYPES = {
+  {"ORP", 1},
+  {"DO", 2},
+  {"PH", 3},
+};
+
 WiFiUDP udp;
-DFRobot_ORP_PRO orp(2480);
 
 void setup()
 {
@@ -45,23 +53,23 @@ void setup()
   Serial.println("\nWiFi Connected!");
   Serial.print("This device IP Address: ");
   Serial.println(WiFi.localIP());
-
-  // delay(1000);
-  // // set up ORP sensor calibration
-  // // todo: change to actual shorted voltage
-  // orp.setCalibration(orp.calibrate(2480));
-
-  // // set up PH sensor
-  // pinMode(PH_LED_PIN, OUTPUT);
-  // ph_offset = 0.0;
-
-  // Serial.print("calibration is: ");
-  // Serial.print(orp.getCalibration());
-  // Serial.println("mV");
 }
 
-String makeDataUdp(float reading, String measurement) {
-  return "";
+String makeDataUdp(float reading, String sensor_type) {
+  StaticJsonDocument<128> doc;
+  if (SENSOR_TYPES.find(sensor_type) == SENSOR_TYPES.end()) {
+    Serial.println("Invalid sensor type.");
+    doc["sensor"] = 0;
+    doc["reading"] = 0;
+    doc["error"] = "Uno: Invalid sensor type";
+  } else {
+    doc["sensor"] = SENSOR_TYPES[sensor_type];
+    doc["reading"] = reading;
+    doc["error"] = "";
+  }
+  String ret;
+  serializeJson(doc, ret);
+  return ret;
 }
 
 float aveArray(uint16_t* array, size_t size) {
@@ -109,7 +117,7 @@ void loop() {
   // DO sensor reading
   getSamples(DO_PIN);
   do_adc_val = uint32_t(VREF) * aveArray(samples, SAMPLE_SIZE) / ADC_RES;
-  Serial.print("PH Reading:\t" + String(do_adc_val) + "\t");
+  Serial.print("DO Reading:\t" + String(do_adc_val) + "\t");
   // send data to pi for processing
   payload = makeDataUdp(do_adc_val, "DO");
   udp.beginPacket(SERVER_IP, UDP_PORT);
@@ -120,7 +128,7 @@ void loop() {
   // ORP sensor reading
   getSamples(ORP_PIN);
   orp_adc_val = uint32_t(VREF) * aveArray(samples, SAMPLE_SIZE) / ADC_RES;
-  Serial.print("ORP Reading:\t" + String(ph_adc_val) + "\t");
+  Serial.print("ORP Reading:\t" + String(orp_adc_val) + "\t");
   // send data to pi for processing
   payload = makeDataUdp(orp_adc_val, "ORP");
   udp.beginPacket(SERVER_IP, UDP_PORT);

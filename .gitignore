@@ -5,6 +5,7 @@ esp_code/managed_components/
 esp_code/build/
 esp_code/main/config.h
 database/telegraf.conf
+water_treatment/water_treatment_monitor/config.h
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

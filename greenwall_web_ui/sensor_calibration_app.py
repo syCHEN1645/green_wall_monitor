@@ -52,7 +52,7 @@ def render_live_sensor_reading():
 
             # TODO: parse payload
             reading = 1
-            st.metric(label="Raw Sensor Reading", value=payload)
+            st.metric(label="Raw Sensor Reading", value=reading)
         except Exception as e:
             st.error(f"Error receiving data: {e}")
         finally:
