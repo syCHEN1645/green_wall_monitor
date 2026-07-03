@@ -18,47 +18,22 @@ with st.sidebar:
     )
     st.divider()
 
-config_data = config_utils.load_config(selected_sensor)
+# cache config data in session state to avoid reloading old config on every interaction
+config_key = f"config_{selected_sensor}"
+if config_key not in st.session_state:
+    st.session_state[config_key] = config_utils.load_config(selected_sensor)
+
 st.subheader(f"{selected_sensor} Sensor Calibration")
 st.markdown(f"**Warning:** Changes will not be saved until you click the 'Save Changes' button.")
 st.divider()
 
 # JSON dict for the selected sensor
-sensor_config = config_utils.load_config(selected_sensor)
+sensor_config = st.session_state[config_key]
 assert isinstance(sensor_config, dict)
 
-def update_new_value(param: dict, key: str):
-    """
-    Update new value in the cached config (not saved to file yet) after type check. 
-    Deal with parameters that have "options" differently.
-
-    Args:
-        param (dict): The parameter dictionary to update.
-        key (str): The key for the parameter in the session state.
-    """
-    if "type" not in param:
-        raise ValueError("Parameter dictionary must contain a 'type' key.")
-    if "val" not in param:
-        raise ValueError("Parameter dictionary must contain a 'val' key.")
-    
-    if "options" not in param:
-        new_val = st.session_state.get(key, None)
-    else:
-        k = st.session_state.get(key, None)
-        assert isinstance(param["options"], dict)
-        new_val = param["options"].get(k, None)
-
-    if new_val is None:
-        raise ValueError("New value is not found or is None.")
-    
-    tp = param["type"]
-    if tp == "int" and not isinstance(new_val, int):
-        raise ValueError(f"Expected int for parameter, got {type(new_val).__name__}")
-    elif tp == "float" and not isinstance(new_val, float):
-        raise ValueError(f"Expected float for parameter, got {type(new_val).__name__}")
-    elif tp == "str" and not isinstance(new_val, str):
-        raise ValueError(f"Expected string for parameter, got {type(new_val).__name__}")
-    param.update({"val": new_val})
+# put buttons on top and on bottom to reduce scrolling
+# revert_button_top = st.button(label="Revert Changes", key="revert_button_top", type="secondary")
+# save_button_top = st.button(label="Save Changes", key="save_button_top", type="primary")
 
 # Display each parameter and its value in the JSON config file
 for key, val in sensor_config.items():
@@ -69,7 +44,7 @@ for key, val in sensor_config.items():
     options = val.get("options", None)
 
     # col1 displays param name, col2 displays param value
-    col1, col2 = st.columns([1, 2])
+    col1, col2 = st.columns([2, 3])
 
     with col1:
         st.markdown(f"***{key}***")
@@ -99,8 +74,6 @@ for key, val in sensor_config.items():
                 index=val_li.index(original_value),
                 label_visibility="collapsed",
                 key=widget_key,
-                on_change=update_new_value,
-                args=(val, widget_key)
             )
 
         # Free input with type check if no options are provided
@@ -114,8 +87,6 @@ for key, val in sensor_config.items():
                     format="%d",
                     label_visibility="collapsed",
                     key=widget_key,
-                    on_change=update_new_value,
-                    args=(val, widget_key)
                 )
             elif tp == "float":
                 new_value = st.number_input(
@@ -125,8 +96,6 @@ for key, val in sensor_config.items():
                     format="%.3f",
                     label_visibility="collapsed",
                     key=widget_key,
-                    on_change=update_new_value,
-                    args=(val, widget_key)
                 )
             elif tp == "str":
                 new_value = st.text_input(
@@ -134,11 +103,60 @@ for key, val in sensor_config.items():
                     value=original_value,
                     label_visibility="collapsed",
                     key=widget_key,
-                    on_change=update_new_value,
-                    args=(val, widget_key)
                 )
             else:
                 raise ValueError(f"Other error occurred")
 
-st.divider()
-st.button("Save Changes", on_click=config_utils.save_config, args=(selected_sensor, sensor_config))
+    st.divider()
+
+def save_config():
+    """
+    Save the updated config to cache and write to the JSON file.
+    """
+    for key, value in sensor_config.items():
+        widget_key = f"{selected_sensor}_{key}"
+        if widget_key in st.session_state:
+            new_value = st.session_state[widget_key]
+
+            if "options" in value and value["options"] is not None:
+                # If the parameter has options, map the selected option back to its actual value
+                options = value["options"]
+                if new_value not in options:
+                    raise ValueError(f"Selected option '{new_value}' is not valid for parameter '{key}'")
+                new_value = options[new_value]
+            else:
+                # if no options provided, check the type of the new value
+                if "type" not in value:
+                    raise ValueError(f"Parameter '{key}' must have a 'type' key.")
+                tp = value["type"]
+                if tp == "int" and not isinstance(new_value, int):
+                    raise ValueError(f"Expected int for parameter, got {type(new_value).__name__}")
+                elif tp == "float" and not isinstance(new_value, float):
+                    raise ValueError(f"Expected float for parameter, got {type(new_value).__name__}")
+                elif tp == "str" and not isinstance(new_value, str):
+                    raise ValueError(f"Expected string for parameter, got {type(new_value).__name__}")
+            
+            # write new value to the cached config
+            value["val"] = new_value
+    config_utils.save_config(selected_sensor, sensor_config)
+    print(f"Saved updated config for {selected_sensor} successfully.")
+
+def revert_config():
+    """
+    Revert the config to the original values from the JSON file.
+    """
+    # Reload the original config from file
+    st.session_state[config_key] = config_utils.load_config(selected_sensor)
+    sensor_config = st.session_state[config_key]
+    for key, value in sensor_config.items():
+        assert isinstance(value, dict)
+        widget_key = f"{selected_sensor}_{key}"
+        if widget_key in st.session_state:
+            # Skip read-only parameters
+            if "write" in value and not value["write"]:
+                continue
+            # Reset the session state value to the original value
+            st.session_state[widget_key] = value.get("val", None)
+
+save_trigger = st.button(label="Save Changes", type="primary", on_click=save_config)
+revert_trigger = st.button(label="Revert Changes", type="secondary", on_click=revert_config)

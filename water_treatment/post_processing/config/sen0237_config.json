@@ -24,7 +24,7 @@
         }
     },
     "do_lookup_temperature": {
-        "val": 15,
+        "val": 25,
         "type": "int",
         "write": true,
         "options": {
@@ -131,7 +131,7 @@
         "write": true
     },
     "cal1_t": {
-        "val": 25.0,
+        "val": 0.0,
         "type": "float",
         "write": true
     },
