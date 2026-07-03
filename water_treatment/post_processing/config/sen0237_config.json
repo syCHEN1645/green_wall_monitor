@@ -24,7 +24,7 @@
         }
     },
     "do_lookup_temperature": {
-        "val": 25,
+        "val": 15,
         "type": "int",
         "write": true,
         "options": {
@@ -121,7 +121,7 @@
         "write": false
     },
     "temperature_c": {
-        "val": 25.0,
+        "val": 15.0,
         "type": "float",
         "write": true
     },

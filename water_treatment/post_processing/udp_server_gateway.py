@@ -5,16 +5,20 @@ This is the main listening loop for UDP server on Raspberry Pi
 import socket
 import sys
 import json
-from influxdb_client import InfluxDBClient, Point, WritePrecision
+from influxdb_client.client.influxdb_client import InfluxDBClient
+from influxdb_client.client.write.point import Point
 from influxdb_client.client.write_api import SYNCHRONOUS
 
-from config.general_config import INFLUXDB_BUCKET, INFLUXDB_ORG, INFLUXDB_TOKEN, INFLUXDB_URL, UDP_IP, UDP_PORT, UDP_BUFFER_SIZE
+from config.general_config import INFLUXDB_BUCKET, INFLUXDB_ORG, INFLUXDB_TOKEN, INFLUXDB_URL, \
+    UDP_IP, UDP_PORT, UDP_BUFFER_SIZE, FORWARD_PORT_WEB_UI, FORWARD_PORT_PROCESSING
 
 CONFIG_FILE = "config/general_config.json"
 
 influx_client = None
-# socket
-s = None
+# sockets, AF_INET is ipv4, SOCK_DGRAM is udp
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+forward_socket_web_ui = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+forward_socket_processing = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 def start_up() -> bool:
     global influx_client, s
@@ -29,15 +33,16 @@ def start_up() -> bool:
         sys.exit()
 
     try:
-        # AF_INET is ipv4, SOCK_DGRAM is udp
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.bind((UDP_IP, UDP_PORT))
         print(f"Listening for ESP32 on port {UDP_PORT}")
+
+        forward_socket_web_ui.bind((UDP_IP, FORWARD_PORT_WEB_UI))
+        forward_socket_processing.bind((UDP_IP, FORWARD_PORT_PROCESSING))
     except Exception as e:
         print(f"Error starting UDP server: {e}")
         sys.exit()
 
-    if influx_client is not None and s is not None:
+    if influx_client is not None:
         return True
     return False
 
@@ -66,12 +71,23 @@ def main():
                 # handshake, data, data, ..., auto close at last data
 
                 # write to InfluxDB
-                point = (
-                    Point("sensor_data")
-                    .tag("source", addr[0])
-                    .field("data", payload)
-                )
-                write_api.write(bucket=INFLUXDB_BUCKET, org=INFLUXDB_ORG, record=point)
+                # point = (
+                #     Point("sensor_data")
+                #     .tag("source", addr[0])
+                #     .field("data", payload)
+                # )
+                # write_api.write(bucket=INFLUXDB_BUCKET, org=INFLUXDB_ORG, record=point)
+
+                # TODO
+                is_data = True
+                # only forward data packets to web_ui, ignore handshake packets
+                if is_data:
+                    # forward to web ui for display
+                    try:
+                        forward_socket_web_ui.sendto(data, ("127.0.0.1", FORWARD_PORT_WEB_UI))
+                    except Exception as e:
+                        # ignore if web ui is not running
+                        pass
             
             except Exception as e:
                 print(f"Error during listening: {e}")
