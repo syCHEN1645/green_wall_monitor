@@ -1,6 +1,7 @@
 import socket
 import select
 import json
+import datetime
 import streamlit as st
 
 import config_utils
@@ -30,6 +31,12 @@ if config_key not in st.session_state:
 
 st.subheader(f"{selected_sensor} Real-time Raw Sensor Reading (V/mV)")
 
+# show the last live sensor reading and the time it was received
+if "last_live_sensor_reading" not in st.session_state:
+    st.session_state["last_live_sensor_reading"] = None
+if "last_live_sensor_reading_time" not in st.session_state:
+    st.session_state["last_live_sensor_reading_time"] = None
+
 @st.fragment(run_every=1.0)
 def render_live_sensor_reading():
     """
@@ -52,7 +59,10 @@ def render_live_sensor_reading():
 
             # TODO: parse payload
             reading = 1
-            st.metric(label="Raw Sensor Reading", value=reading)
+            st.session_state["last_live_sensor_reading"] = reading
+            st.session_state["last_live_sensor_reading_time"] = datetime.datetime.now().strftime("%m-%d %H:%M:%S")
+            st.metric(label="Raw Sensor Reading", value=st.session_state["last_live_sensor_reading"])
+            st.caption(f"Last reading received at: **{st.session_state['last_live_sensor_reading_time']}**")
         except Exception as e:
             st.error(f"Error receiving data: {e}")
         finally:

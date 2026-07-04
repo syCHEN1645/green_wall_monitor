@@ -1,6 +1,7 @@
 import sys
 import json
 import socket
+import time
 from influxdb_client.client.influxdb_client import InfluxDBClient
 from influxdb_client.client.write.point import Point
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -25,16 +26,25 @@ s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 def start_up() -> bool:
     global influx_client, s
-    try:
-        influx_client = InfluxDBClient(
-            url=INFLUXDB_URL,
-            token=INFLUXDB_TOKEN,
-            org=INFLUXDB_ORG
-        )
-    except Exception as e:
-        print(f"Error connecting to InfluxDB: {e}")
-        return False
-
+    max_retries = 10
+    retry_count = 0
+    while influx_client is None:
+        try:
+            print("Connecting to InfluxDB...")
+            influx_client = InfluxDBClient(
+                url=INFLUXDB_URL,
+                token=INFLUXDB_TOKEN,
+                org=INFLUXDB_ORG
+            )
+            print("InfluxDB Client initialized successfully.")
+        except Exception as e:
+            print(f"Connection to InfluxDB failed: {e}. Retrying in 10s...")
+            time.sleep(10)
+            retry_count += 1
+            if retry_count >= max_retries:
+                print("Max retries reached. Exiting.")
+                return False
+            
     try:
         s.bind((LOCAL_IP, UDP_PROCESSING_PORT))
         print(f"Listening for UDP gateway on port {UDP_PROCESSING_PORT}")
@@ -49,6 +59,7 @@ def start_up() -> bool:
 
 
 def main():
+    global influx_client, s
     if not start_up():
         print("Startup failed. Exiting.")
         sys.exit()
@@ -88,14 +99,29 @@ def main():
             else:
                 raise ValueError(f"Unsupported sensor type ID: {sensor_type_id}")
 
-            # write to InfluxDB
-            point = (
-                Point("water_treatment")
-                .measurement("water_treatment")
-                .field(measurement_name, processed_reading)
-            )
-            write_api.write(bucket=INFLUXDB_BUCKET, org=INFLUXDB_ORG, record=point)
-
+            try:
+                # write to InfluxDB
+                point = (
+                    Point("water_treatment")
+                    .measurement("water_treatment")
+                    .field(measurement_name, processed_reading)
+                )
+                write_api.write(bucket=INFLUXDB_BUCKET, org=INFLUXDB_ORG, record=point)
+            except Exception as db_error:
+                print(f"Error writing to InfluxDB: {db_error}")
+                while influx_client is None:
+                    try:
+                        print("Connecting to InfluxDB...")
+                        influx_client = InfluxDBClient(
+                            url=INFLUXDB_URL,
+                            token=INFLUXDB_TOKEN,
+                            org=INFLUXDB_ORG
+                        )
+                        print("InfluxDB Client reconnected successfully.")
+                    except Exception as e:
+                        print(f"Connection to InfluxDB failed: {e}. Retrying in 10s...")
+                        time.sleep(10)
+                        continue
 
         except Exception as e:
             print(f"Error receiving data: {e}")
