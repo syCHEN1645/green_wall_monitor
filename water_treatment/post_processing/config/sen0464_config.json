@@ -20,7 +20,7 @@
         "write": false
     },
     "zero_point_offset": {
-        "val": 0,
+        "val": 500,
         "type": "int",
         "write": true
     },

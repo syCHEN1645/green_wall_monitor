@@ -1,10 +1,10 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define DO_PIN 25
-#define ORP_PIN 26
-#define PH_PIN 27
-#define PH_LED_PIN 13
+#define DO_PIN A0
+#define ORP_PIN A1
+#define PH_PIN A2
+#define PH_LED_PIN A3
 
 // reference volage (5V for Uno)
 #define VREF 5000

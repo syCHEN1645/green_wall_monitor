@@ -5,25 +5,7 @@
 #include <WiFiUdp.h>
 #include <ArduinoJson.h>
 
-#include <config.h>
-
-#define DO_PIN 25
-#define ORP_PIN 26
-#define PH_PIN 27
-#define PH_LED_PIN 13
-
-// reference volage (5000mV for Uno)
-#define VREF 5000
-// adc resolution (Uno is by default 10-bit 1024)
-#define ADC_RES 1024
-
-#define SSID "ssid"
-#define PASSWORD "pswd"
-#define SERVER_IP "192.168.1.6"
-#define UDP_PORT 5005
-
-#define SAMPLE_SIZE 40
-#define SAMPLE_INTERVAL 25
+#include "config.h"
 
 uint16_t samples[SAMPLE_SIZE];
 float ph_adc_val;
@@ -51,8 +33,11 @@ void setup()
       Serial.print(".");
   }
   Serial.println("\nWiFi Connected!");
+  delay(3000);
   Serial.print("This device IP Address: ");
   Serial.println(WiFi.localIP());
+
+  udp.begin(0);
 }
 
 String makeDataUdp(float reading, String sensor_type) {
@@ -117,7 +102,7 @@ void loop() {
   // DO sensor reading
   getSamples(DO_PIN);
   do_adc_val = uint32_t(VREF) * aveArray(samples, SAMPLE_SIZE) / ADC_RES;
-  Serial.print("DO Reading:\t" + String(do_adc_val) + "\t");
+  Serial.println("DO Reading:\t" + String(do_adc_val) + "\t");
   // send data to pi for processing
   payload = makeDataUdp(do_adc_val, "DO");
   udp.beginPacket(SERVER_IP, UDP_PORT);
@@ -128,7 +113,7 @@ void loop() {
   // ORP sensor reading
   getSamples(ORP_PIN);
   orp_adc_val = uint32_t(VREF) * aveArray(samples, SAMPLE_SIZE) / ADC_RES;
-  Serial.print("ORP Reading:\t" + String(orp_adc_val) + "\t");
+  Serial.println("ORP Reading:\t" + String(orp_adc_val) + "\t");
   // send data to pi for processing
   payload = makeDataUdp(orp_adc_val, "ORP");
   udp.beginPacket(SERVER_IP, UDP_PORT);
@@ -139,13 +124,13 @@ void loop() {
   // PH sensor reading
   getSamples(PH_PIN);
   ph_adc_val = uint32_t(VREF) * aveArray(samples, SAMPLE_SIZE) / ADC_RES;
-  Serial.print("PH Reading:\t" + String(ph_adc_val) + "\t");
+  Serial.println("PH Reading:\t" + String(ph_adc_val) + "\t");
   // send data to pi for processing
   payload = makeDataUdp(ph_adc_val, "PH");
   udp.beginPacket(SERVER_IP, UDP_PORT);
   udp.print(payload);
   udp.endPacket();
 
-  delay(60000);
+  delay(5000);
 }
 

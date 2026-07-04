@@ -2,6 +2,7 @@ import socket
 import select
 import json
 import datetime
+import threading
 import streamlit as st
 
 import config_utils
@@ -29,44 +30,99 @@ config_key = f"config_{selected_sensor}"
 if config_key not in st.session_state:
     st.session_state[config_key] = config_utils.load_config(selected_sensor)
 
+# JSON dict for the selected sensor
+sensor_config = st.session_state[config_key]
+assert isinstance(sensor_config, dict)
+
 st.subheader(f"{selected_sensor} Real-time Raw Sensor Reading (V/mV)")
 
 # show the last live sensor reading and the time it was received
+# use a mutable object to store the last reading and time, so that the UDP socket worker can update it
 if "last_live_sensor_reading" not in st.session_state:
-    st.session_state["last_live_sensor_reading"] = None
+    st.session_state["last_live_sensor_reading"] = {}
 if "last_live_sensor_reading_time" not in st.session_state:
-    st.session_state["last_live_sensor_reading_time"] = None
+    st.session_state["last_live_sensor_reading_time"] = {}
+
+if not hasattr(st, "_active_bg_socket"):
+    setattr(st, "_active_bg_socket", None)
+
+# there is a background thread running from before refreshing the browser, close it and start a new thread
+if getattr(st, "_active_bg_socket") is not None:
+    try:
+        getattr(st, "_active_bg_socket").close()
+    except Exception:
+        pass
+    setattr(st, "_active_bg_socket", None)
+
+def udp_socket_rx_worker(reading_cache, time_cache):
+    """
+    Worker function to receive UDP packets from the UDP server.
+    This function runs in a separate thread and updates the session state with the latest sensor reading.
+    """
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.bind(("127.0.0.1", RECV_PORT))
+        s.setblocking(True)
+        setattr(st, "_active_bg_socket", s)
+    except Exception as e:
+        print(f"Error setting up UDP socket: {e}")
+        return
+    
+    while True:
+        try:
+            data, _ = s.recvfrom(128)
+            payload = json.loads(data.decode("utf-8"))
+
+            assert isinstance(payload, dict)
+            if "sensor" not in payload or "reading" not in payload or "error" not in payload:
+                print("Invalid payload received from UDP server.")
+                continue
+            
+            if payload["error"]:
+                print(f"Error from UDP server: {payload['error']}")
+                continue
+
+            sensor_id = payload["sensor"]
+
+            reading_cache[sensor_id] = payload["reading"]
+            time_cache[sensor_id] = datetime.datetime.now().strftime("%m-%d %H:%M:%S")
+            print(f"Updated live reading for sensor '{sensor_id}': {payload['reading']}")
+
+        except OSError as os_err:
+            # Captures socket closures
+            print(f"Socket channel disconnected or closed ({os_err.errno}). Terminating old loop thread safely.")
+            break
+
+        except Exception as e:
+            print(f"Error receiving data from UDP server: {e}")
+
+# run the UDP socket receiver in a separate thread to avoid blocking the Streamlit UI
+if "udp_thread_started" not in st.session_state:
+    worker = threading.Thread(
+        target=udp_socket_rx_worker,
+        args=(st.session_state["last_live_sensor_reading"], st.session_state["last_live_sensor_reading_time"]),
+        # Setting daemon ensures thread dies cleanly when the app terminates
+        daemon=True 
+    )
+    worker.start()
+    st.session_state["udp_thread_started"] = True
 
 @st.fragment(run_every=1.0)
 def render_live_sensor_reading():
     """
     Render the live sensor reading from the UDP server.
     """
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.bind(("127.0.0.1", RECV_PORT))
-    except Exception as e:
-        st.error(f"Error setting up UDP socket: {e}")
+    this_sensor_type_id = sensor_config["sensor_id"]["val"]
+    if this_sensor_type_id not in st.session_state["last_live_sensor_reading"] or this_sensor_type_id not in st.session_state["last_live_sensor_reading_time"]:
+        st.session_state["last_live_sensor_reading"][this_sensor_type_id] = "N/A"
+        st.session_state["last_live_sensor_reading_time"][this_sensor_type_id] = "N/A"
+        print(f"No live reading available for sensor '{this_sensor_type_id}' yet.")
         return
 
-    # check if a packet is waiting to be received
-    # readable, writable, exceptional = select.select([s], [], [], 0.1)
-    recv_states = select.select([s], [], [], 0.1)
-    if recv_states[0]:
-        try:
-            data, addr = s.recvfrom(1024)
-            payload = data.decode("utf-8")
-
-            # TODO: parse payload
-            reading = 1
-            st.session_state["last_live_sensor_reading"] = reading
-            st.session_state["last_live_sensor_reading_time"] = datetime.datetime.now().strftime("%m-%d %H:%M:%S")
-            st.metric(label="Raw Sensor Reading", value=st.session_state["last_live_sensor_reading"])
-            st.caption(f"Last reading received at: **{st.session_state['last_live_sensor_reading_time']}**")
-        except Exception as e:
-            st.error(f"Error receiving data: {e}")
-        finally:
-            s.close()
+    reading = st.session_state["last_live_sensor_reading"][this_sensor_type_id]
+    timestamp = st.session_state["last_live_sensor_reading_time"][this_sensor_type_id]
+    st.metric(label="Raw Sensor Reading", value=reading)
+    st.caption(f"Last reading received at: **{timestamp}**")
 
 render_live_sensor_reading()
 st.divider()
@@ -74,10 +130,6 @@ st.divider()
 st.subheader(f"{selected_sensor} Sensor Calibration")
 st.markdown(f"**Warning:** Changes will not be saved until you click the 'Save Changes' button.")
 st.divider()
-
-# JSON dict for the selected sensor
-sensor_config = st.session_state[config_key]
-assert isinstance(sensor_config, dict)
 
 # put buttons on top and on bottom to reduce scrolling
 # revert_button_top = st.button(label="Revert Changes", key="revert_button_top", type="secondary")
