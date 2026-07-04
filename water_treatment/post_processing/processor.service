@@ -1,0 +1,15 @@
+[Unit]
+Description=Raw Data Processor Service
+After=network.target udp-gateway.service
+Wants=udp-gateway.service
+
+[Service]
+Type=simple
+User=greenwall
+WorkingDirectory=/home/greenwall/green_wall_monitor/water_treatment/post_processing
+ExecStart=/home/greenwall/green_wall_monitor/.venv/bin/python raw_data_processor.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

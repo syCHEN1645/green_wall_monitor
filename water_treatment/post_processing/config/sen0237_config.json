@@ -78,11 +78,6 @@
         "type": "list",
         "write": false
     },
-    "temperature_c": {
-        "val": 15.0,
-        "type": "float",
-        "write": true
-    },
     "cal1_v": {
         "val": 1600,
         "type": "int",

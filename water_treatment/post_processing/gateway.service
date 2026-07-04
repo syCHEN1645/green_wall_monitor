@@ -1,0 +1,14 @@
+[Unit]
+Description=UDP Server Gateway Service
+After=network.target
+
+[Service]
+Type=simple
+User=greenwall
+WorkingDirectory=/home/greenwall/green_wall_monitor/water_treatment/post_processing
+ExecStart=/home/greenwall/green_wall_monitor/.venv/bin/python udp_server_gateway.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

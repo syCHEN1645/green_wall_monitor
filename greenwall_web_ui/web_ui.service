@@ -1,0 +1,16 @@
+[Unit]
+Description=Streamlit Web UI
+After=network.target udp-gateway.service
+Wants=udp-gateway.service
+
+[Service]
+Type=simple
+User=greenwall
+WorkingDirectory=/home/greenwall/green_wall_monitor/water_treatment/post_processing
+# Point directly to the streamlit executable inside your .venv folder
+ExecStart=/home/greenwall/green_wall_monitor/.venv/bin/streamlit run sensor_calibration_app.py --server.port 8501 --server.address 0.0.0.0
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
