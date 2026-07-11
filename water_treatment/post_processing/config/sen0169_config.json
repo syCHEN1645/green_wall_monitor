@@ -1,0 +1,27 @@
+{
+    "sensor_model_name": {
+        "val": "SEN0196",
+        "type": "str",
+        "write": false
+    },
+    "sensor_model_id": {
+        "val": 3,
+        "type": "int",
+        "write": false
+    },
+    "sensor_name": {
+        "val": "PH-sensor",
+        "type": "str",
+        "write": true
+    },
+    "sensor_id": {
+        "val": 3,
+        "type": "int",
+        "write": false
+    },
+    "offset": {
+        "val": 0.0,
+        "type": "float",
+        "write": true
+    }
+}
