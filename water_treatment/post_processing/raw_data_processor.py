@@ -48,6 +48,8 @@ def start_up() -> bool:
     try:
         s.bind((LOCAL_IP, UDP_PROCESSING_PORT))
         print(f"Listening for UDP gateway on port {UDP_PROCESSING_PORT}")
+        # set a timeout for the socket to prevent blocking indefinitely
+        s.settimeout(1.0)
 
     except Exception as e:
         print(f"Error starting UDP socket: {e}")
@@ -122,6 +124,15 @@ def main():
                         print(f"Connection to InfluxDB failed: {e}. Retrying in 10s...")
                         time.sleep(10)
                         continue
+
+        except KeyboardInterrupt as e:
+            print("Keyboard interrupt received. Exiting.")
+            try:
+                influx_client.close()
+            except Exception as e:
+                pass
+            s.close()
+            break
 
         except Exception as e:
             print(f"Error receiving data: {e}")

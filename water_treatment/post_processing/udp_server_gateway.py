@@ -15,10 +15,12 @@ s_rx = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s_tx = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 def start_up() -> bool:
-    global s_rx
+    global s_rx, s_tx
     try:
         s_rx.bind(("0.0.0.0", UDP_GATEWAY_PORT))
         print(f"Listening for Uno on port {UDP_GATEWAY_PORT}")
+        s_rx.settimeout(1.0)
+        s_tx.settimeout(1.0)
     except Exception as e:
         print(f"Error starting UDP server: {e}")
         return False
@@ -33,39 +35,39 @@ def main():
     # main program loop starts here
     assert s_rx is not None
     assert s_tx is not None
-
-    try: 
-        while True:
+ 
+    while True:
+        try:
             # data = the raw bytes packet, addr = (Uno_IP, Uno_Port)
             data, addr = s_rx.recvfrom(UDP_BUFFER_SIZE)
+        
+            payload = data.decode("utf-8")
+            print(f"[From {addr[0]} received: {payload}]")
+
+            # forward to web ui for display
+            try:
+                s_tx.sendto(data, (LOCAL_IP, UDP_WEB_UI_PORT))
+            except Exception as e:
+                # ignore if web ui is not running
+                pass
 
             try:
-                payload = data.decode("utf-8")
-                print(f"[From {addr[0]} received: {payload}]")
-
-                # forward to web ui for display
-                try:
-                    s_tx.sendto(data, (LOCAL_IP, UDP_WEB_UI_PORT))
-                except Exception as e:
-                    # ignore if web ui is not running
-                    pass
-
-                try:
-                    s_tx.sendto(data, (LOCAL_IP, UDP_PROCESSING_PORT))
-                except Exception as e:
-                    # ignore if processing is not running
-                    pass
-            
+                s_tx.sendto(data, (LOCAL_IP, UDP_PROCESSING_PORT))
             except Exception as e:
-                print(f"Error during listening: {e}")
-        
-    except KeyboardInterrupt:
-        print("User terminated program.")
+                # ignore if processing is not running
+                pass
 
-    finally:
-        s_rx.close()
-        s_tx.close()
-        print("Sockets successfully closed.")
+        except KeyboardInterrupt:
+            print("User terminated program.")
+            break
+
+        except Exception as e:
+            print(f"Exception during listening: {e}")
+            continue
+
+    s_rx.close()
+    s_tx.close()
+    print("Sockets successfully closed.")
 
 if __name__ == "__main__":
     main()
