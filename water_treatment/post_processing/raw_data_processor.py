@@ -89,6 +89,8 @@ def main():
             if sensor_type_id not in SENSOR_TYPES.values():
                 raise ValueError(f"Invalid sensor type ID: {sensor_type_id}")
             
+            print(f"[From {addr[0]} received: {payload}]")
+            
             if sensor_type_id == SENSOR_TYPES["DO"]:
                 processed_reading = process_do_reading(float(reading))
                 measurement_name = "DO"
@@ -133,6 +135,11 @@ def main():
                 pass
             s.close()
             break
+
+        except socket.timeout:
+            # Timeout occurred, continue to next iteration to check for shutdown
+            print("Socket timeout occurred, waiting for next packet...")
+            continue
 
         except Exception as e:
             print(f"Error receiving data: {e}")
