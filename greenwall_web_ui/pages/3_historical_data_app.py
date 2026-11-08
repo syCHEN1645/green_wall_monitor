@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pandas as pd
 import plotly.express as px
@@ -9,10 +9,7 @@ from influxdb_client.client.influxdb_client import InfluxDBClient
 INFLUX_URL = os.environ.get("GREENWALL_INFLUX_URL", "http://localhost:8086")
 ORG = os.environ.get("GREENWALL_INFLUX_ORG", "greenwall")
 BUCKET = os.environ.get("GREENWALL_INFLUX_BUCKET", "test-data")
-TOKEN = os.environ.get(
-    "GREENWALL_INFLUX_TOKEN",
-    "s7b75XrZFzLjnnhq3WVlhhCpo7xXwSOVSViG62g9ibXXkUZRn-5_Xhk0qL7_HI31YUHmppcFEHvKDk-U4im0Rw==",
-)
+TOKEN = os.environ.get("GREENWALL_INFLUX_TOKEN")
 
 FALLBACK_ENTRIES = [
     "2-air-temp-out/air-temp",
@@ -25,6 +22,14 @@ FALLBACK_ENTRIES = [
 
 st.set_page_config(page_title="Historical Data Review", layout="wide")
 st.title("Historical Data Review")
+
+
+def to_flux_time(value: datetime) -> str:
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    else:
+        value = value.astimezone(timezone.utc)
+    return value.isoformat().replace("+00:00", "Z")
 
 
 def normalize_series_name(record) -> str:
@@ -75,8 +80,8 @@ def fetch_selected_history(start_dt: datetime, end_dt: datetime, selected_entrie
     if not selected_entries:
         return pd.DataFrame(columns=["timestamp", "entry", "value"])
 
-    start_iso = start_dt.isoformat()
-    end_iso = end_dt.isoformat()
+    start_iso = to_flux_time(start_dt)
+    end_iso = to_flux_time(end_dt)
     flux_query = f'''
     from(bucket: "{BUCKET}")
         |> range(start: {start_iso}, stop: {end_iso})
@@ -116,6 +121,10 @@ def fetch_selected_history(start_dt: datetime, end_dt: datetime, selected_entrie
     finally:
         client.close()
 
+
+if not TOKEN:
+    st.error("InfluxDB credentials are missing. Set the GREENWALL_INFLUX_TOKEN environment variable before running this page.")
+    st.stop()
 
 with st.sidebar:
     st.header("Filters")
