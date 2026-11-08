@@ -1,4 +1,6 @@
 streamlit>=1.30.0
 influxdb-client>=1.36.0
 matplotlib>=3.8.0
+plotly>=5.24.0
+pandas>=2.2.0
 tzdata>=2023.3

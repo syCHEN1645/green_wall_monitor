@@ -15,9 +15,9 @@ with col1:
         st.switch_page("pages/1_data_review_app.py")
 
 with col2:
-    st.subheader("InfluxDB Data Visualisation", text_alignment="center")
-    if st.button("Data Visualisation Page", type="secondary", icon="📊", use_container_width=True):
-        st.switch_page("pages/2_influxdb_data_visualisation_app.py")
+    st.subheader("Historical Data Review", text_alignment="center")
+    if st.button("Historical Data Page", type="secondary", icon="📊", use_container_width=True):
+        st.switch_page("pages/3_historical_data_app.py")
 
 st.divider()
 st.info("Use the sidebar navigation menu to jump between operations spaces at any time.")
