@@ -1,10 +1,14 @@
 import os
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from dotenv import load_dotenv
 from influxdb_client.client.influxdb_client import InfluxDBClient
+
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env")
 
 INFLUX_URL = os.environ.get("GREENWALL_INFLUX_URL", "http://localhost:8086")
 ORG = os.environ.get("GREENWALL_INFLUX_ORG", "greenwall")
@@ -107,7 +111,7 @@ def fetch_selected_history(start_dt: datetime, end_dt: datetime, selected_entrie
                 if name not in selected_entries:
                     continue
 
-                timestamp = pd.to_datetime(record.get_time())
+                timestamp = pd.to_datetime(record.get_time(), utc=True)
                 rows.append({
                     "timestamp": timestamp.floor("min"),
                     "entry": name,
@@ -117,7 +121,9 @@ def fetch_selected_history(start_dt: datetime, end_dt: datetime, selected_entrie
         if not rows:
             return pd.DataFrame(columns=["timestamp", "entry", "value"])
 
-        return pd.DataFrame(rows)
+        history_df = pd.DataFrame(rows)
+        history_df["timestamp"] = pd.to_datetime(history_df["timestamp"], utc=True)
+        return history_df
     finally:
         client.close()
 
@@ -172,8 +178,13 @@ if history_df.empty:
     st.warning("No data found for the selected entries within the chosen time range.")
     st.stop()
 
-minute_labels = pd.date_range(start=start_dt.replace(second=0, microsecond=0), end=end_dt.replace(second=0, microsecond=0), freq="1min")
+minute_labels = pd.date_range(
+    start=pd.Timestamp(start_dt, tz="UTC").floor("min"),
+    end=pd.Timestamp(end_dt, tz="UTC").floor("min"),
+    freq="1min",
+)
 wide_df = pd.DataFrame({"timestamp": minute_labels})
+wide_df["timestamp"] = pd.to_datetime(wide_df["timestamp"], utc=True)
 
 for entry_name in selected_entries:
     entry_series = history_df[history_df["entry"] == entry_name].copy()
@@ -181,17 +192,19 @@ for entry_name in selected_entries:
         wide_df[entry_name] = pd.NA
         continue
 
-    entry_series = entry_series[["timestamp", "value"]].drop_duplicates()
-    entry_series = entry_series.set_index("timestamp")["value"]
+    entry_series = entry_series[["timestamp", "value"]].copy()
+    entry_series["timestamp"] = pd.to_datetime(entry_series["timestamp"], utc=True)
+    entry_series = entry_series.drop_duplicates(subset=["timestamp"]).set_index("timestamp")["value"]
     wide_df[entry_name] = wide_df["timestamp"].map(entry_series)
 
 wide_df = wide_df.where(pd.notna(wide_df), pd.NA)
+wide_df["timestamp"] = wide_df["timestamp"].dt.strftime("%Y-%m-%d %H:%M")
 
 st.subheader("Table view")
 st.dataframe(wide_df, use_container_width=True, hide_index=True)
 
 plot_df = wide_df.melt(id_vars="timestamp", var_name="entry", value_name="value").dropna(subset=["value"])
-plot_df["timestamp"] = pd.to_datetime(plot_df["timestamp"])
+plot_df["timestamp"] = pd.to_datetime(plot_df["timestamp"], utc=True)
 
 fig = px.line(
     plot_df,
@@ -209,6 +222,7 @@ fig.update_layout(
     template="plotly_white",
 )
 fig.update_xaxes(tickformat="%Y-%m-%d %H:%M")
+fig.update_traces(mode="lines+markers")
 
 st.subheader("Scatter plot")
 st.plotly_chart(fig, use_container_width=True)

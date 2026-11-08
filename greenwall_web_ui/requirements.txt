@@ -3,4 +3,5 @@ influxdb-client>=1.36.0
 matplotlib>=3.8.0
 plotly>=5.24.0
 pandas>=2.2.0
+python-dotenv>=1.0.1
 tzdata>=2023.3
