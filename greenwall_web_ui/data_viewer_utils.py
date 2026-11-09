@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -109,40 +109,24 @@ def resolve_query_window(start_dt: datetime, end_dt: datetime, real_time_mode: b
     return normalized_start, pd.Timestamp(end_dt).tz_convert(SINGAPORE_TZ).to_pydatetime()
 
 
-def build_refresh_script(interval_seconds: int | None) -> str:
-    if interval_seconds is None:
-        return """
-        <script>
-            (() => {
-                const cleanup = () => {
-                    if (window.__greenwall_data_viewer_timer) {
-                        clearInterval(window.__greenwall_data_viewer_timer);
-                        window.__greenwall_data_viewer_timer = null;
-                    }
-                };
-                cleanup();
-                window.addEventListener('beforeunload', cleanup, { once: true });
-            })();
-        </script>
-        """
+def should_auto_refresh(last_refresh_at: datetime | None, interval_seconds: int, now_dt: datetime | None = None) -> bool:
+    if interval_seconds <= 0:
+        return False
+    if last_refresh_at is None:
+        return True
 
-    return f"""
-    <script>
-        (() => {{
-            const cleanup = () => {{
-                if (window.__greenwall_data_viewer_timer) {{
-                    clearInterval(window.__greenwall_data_viewer_timer);
-                    window.__greenwall_data_viewer_timer = null;
-                }}
-            }};
+    reference_now = now_dt or datetime.now(SINGAPORE_TZ)
+    now_ts = pd.Timestamp(reference_now)
+    last_ts = pd.Timestamp(last_refresh_at)
 
-            cleanup();
-            window.__greenwall_data_viewer_timer = setInterval(() => {{
-                if (document.visibilityState !== 'hidden') {{
-                    window.location.reload();
-                }}
-            }}, {interval_seconds * 1000});
-            window.addEventListener('beforeunload', cleanup, {{ once: true }});
-        }})();
-    </script>
-    """
+    if now_ts.tzinfo is None:
+        now_ts = now_ts.tz_localize(SINGAPORE_TZ)
+    else:
+        now_ts = now_ts.tz_convert(SINGAPORE_TZ)
+
+    if last_ts.tzinfo is None:
+        last_ts = last_ts.tz_localize(SINGAPORE_TZ)
+    else:
+        last_ts = last_ts.tz_convert(SINGAPORE_TZ)
+
+    return (now_ts - last_ts) >= timedelta(seconds=interval_seconds)

@@ -39,18 +39,16 @@ LIGHT_THEME_CSS = """
         padding-top: 0.5rem !important;
     }
 
-    /* Sidebar labels and text */
+    /* Sidebar text */
     [data-testid="stSidebar"] label,
     [data-testid="stSidebar"] p,
     [data-testid="stSidebar"] small,
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
-    [data-testid="stSidebar"] [data-testid="stCaptionContainer"],
-    [data-testid="stSidebar"] .stCaption,
-    [data-testid="stSidebar"] .stCaption p {
-        color: #a1a8b1 !important;
+    [data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
+        color: #2a2f36 !important;
     }
 
-    /* Text inputs, date inputs, time inputs, number inputs, and text areas */
+    /* Light text, date, time, number and textarea inputs */
     [data-testid="stSidebar"] input,
     [data-testid="stSidebar"] textarea {
         background-color: #f4f6f8 !important;
@@ -82,7 +80,7 @@ LIGHT_THEME_CSS = """
         -webkit-text-fill-color: #2a2f36 !important;
     }
 
-    /* Selectbox and multiselect visible controls */
+    /* Light selectbox and multiselect controls */
     [data-testid="stSidebar"] [data-baseweb="select"] > div {
         background-color: #f4f6f8 !important;
         color: #2a2f36 !important;
@@ -108,9 +106,7 @@ LIGHT_THEME_CSS = """
         color: #2a2f36 !important;
     }
 
-    /* Dropdown menus and options.
-       These may be rendered outside the sidebar by BaseWeb. */
-    [data-baseweb="popover"],
+    /* Dropdown menus */
     [data-baseweb="menu"],
     [role="listbox"] {
         background-color: #ffffff !important;
@@ -118,7 +114,6 @@ LIGHT_THEME_CSS = """
         border: 1px solid #c5d0d9 !important;
     }
 
-    [data-baseweb="popover"] *,
     [data-baseweb="menu"] *,
     [role="listbox"] *,
     [role="option"] {
@@ -135,12 +130,70 @@ LIGHT_THEME_CSS = """
         color: #212529 !important;
     }
 
-    /* Checkboxes and radio controls */
-    [data-testid="stSidebar"] [data-testid="stCheckbox"] label,
-    [data-testid="stSidebar"] [data-testid="stRadio"] label {
-        color: #2a2f36 !important;
+    /* Dark popup calendar with white text */
+    [data-baseweb="calendar"],
+    [data-baseweb="calendar"] * {
+        color: #ffffff !important;
     }
 
+    [data-baseweb="calendar"] {
+        background-color: #20252b !important;
+        border: 1px solid #4b5661 !important;
+        border-radius: 8px !important;
+    }
+
+    [data-baseweb="calendar"] button {
+        color: #ffffff !important;
+        background-color: transparent !important;
+    }
+
+    [data-baseweb="calendar"] button:hover {
+        background-color: #3a424b !important;
+    }
+
+    [data-baseweb="calendar"] [role="gridcell"] {
+        color: #ffffff !important;
+        background-color: transparent !important;
+    }
+
+    [data-baseweb="calendar"] [role="gridcell"]:hover {
+        color: #ffffff !important;
+        background-color: #3a424b !important;
+    }
+
+    [data-baseweb="calendar"] [aria-selected="true"] {
+        color: #ffffff !important;
+        background-color: #557a9d !important;
+    }
+
+    /* Calendar fallback selectors for alternate Streamlit versions */
+    .react-datepicker,
+    .react-datepicker * {
+        color: #ffffff !important;
+    }
+
+    .react-datepicker {
+        background-color: #20252b !important;
+        border: 1px solid #4b5661 !important;
+    }
+
+    .react-datepicker__day:hover,
+    .react-datepicker__month-text:hover,
+    .react-datepicker__quarter-text:hover,
+    .react-datepicker__year-text:hover {
+        color: #ffffff !important;
+        background-color: #3a424b !important;
+    }
+
+    .react-datepicker__day--selected,
+    .react-datepicker__day--keyboard-selected {
+        color: #ffffff !important;
+        background-color: #557a9d !important;
+    }
+
+    /* Checkbox and radio controls */
+    [data-testid="stSidebar"] [data-testid="stCheckbox"] label,
+    [data-testid="stSidebar"] [data-testid="stRadio"] label,
     [data-testid="stSidebar"] [data-testid="stCheckbox"] p,
     [data-testid="stSidebar"] [data-testid="stRadio"] p {
         color: #2a2f36 !important;
@@ -157,9 +210,12 @@ LIGHT_THEME_CSS = """
         box-shadow: 0 0 0 2px rgba(108, 155, 207, 0.25) !important;
     }
 
-    /* Fallback for controls that remain dark because of browser styling */
+    /* Keep the input fields light, including browser date/time controls */
     [data-testid="stSidebar"] input[type="date"],
     [data-testid="stSidebar"] input[type="time"] {
+        background-color: #f4f6f8 !important;
+        color: #2a2f36 !important;
+        -webkit-text-fill-color: #2a2f36 !important;
         color-scheme: light !important;
     }
 
@@ -263,24 +319,6 @@ LIGHT_THEME_CSS = """
         color: #2a2f36 !important;
     }
 
-    [data-testid="stSidebar"] .stAlert,
-    [data-testid="stSidebar"] .stInfo,
-    [data-testid="stSidebar"] .stSuccess,
-    [data-testid="stSidebar"] .stWarning,
-    [data-testid="stSidebar"] .stError {
-        background: rgba(243, 245, 247, 0.7) !important;
-        border: 1px solid rgba(133, 142, 155, 0.22) !important;
-        color: #a1a8b1 !important;
-    }
-
-    [data-testid="stSidebar"] .stAlert *,
-    [data-testid="stSidebar"] .stInfo *,
-    [data-testid="stSidebar"] .stSuccess *,
-    [data-testid="stSidebar"] .stWarning *,
-    [data-testid="stSidebar"] .stError * {
-        color: #a1a8b1 !important;
-    }
-
     /* Plot */
     .plotly .svg-container {
         background: rgba(255, 255, 255, 0.9) !important;
@@ -346,3 +384,11 @@ def render_topbar_company_name() -> None:
         ),
         unsafe_allow_html=True,
     )
+
+
+def render_sidebar_company_name() -> None:
+    with st.sidebar:
+        st.markdown(
+            f'<div class="sidebar-brand">{COMPANY_NAME}</div>',
+            unsafe_allow_html=True,
+        )
