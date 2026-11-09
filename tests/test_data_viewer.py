@@ -12,6 +12,7 @@ from data_viewer_utils import (
     build_refresh_script,
     build_wide_frame,
     export_csv_bytes,
+    resolve_query_window,
     to_singapore_time,
 )
 
@@ -53,6 +54,28 @@ def test_build_refresh_script_uses_single_timer_and_reload():
     assert "clearInterval(window.__greenwall_data_viewer_timer)" in script
     assert "setInterval" in script
     assert "window.location.reload()" in script
+
+
+def test_resolve_query_window_uses_current_time_in_real_time_mode():
+    start_dt = datetime(2026, 11, 8, 20, 0, tzinfo=SINGAPORE_TZ)
+    end_dt = datetime(2026, 11, 8, 21, 0, tzinfo=SINGAPORE_TZ)
+    now_dt = datetime(2026, 11, 8, 21, 45, tzinfo=SINGAPORE_TZ)
+
+    resolved_start, resolved_end = resolve_query_window(start_dt, end_dt, True, now_dt)
+
+    assert resolved_start == start_dt
+    assert resolved_end == now_dt
+
+
+def test_resolve_query_window_keeps_fixed_end_in_manual_mode():
+    start_dt = datetime(2026, 11, 8, 20, 0, tzinfo=SINGAPORE_TZ)
+    end_dt = datetime(2026, 11, 8, 21, 0, tzinfo=SINGAPORE_TZ)
+    now_dt = datetime(2026, 11, 8, 23, 0, tzinfo=SINGAPORE_TZ)
+
+    resolved_start, resolved_end = resolve_query_window(start_dt, end_dt, False, now_dt)
+
+    assert resolved_start == start_dt
+    assert resolved_end == end_dt
 
 
 def test_main_app_routes_to_data_viewer_page():

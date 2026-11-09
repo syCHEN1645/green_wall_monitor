@@ -96,6 +96,18 @@ def export_csv_bytes(frame: pd.DataFrame) -> bytes:
     return csv_df.to_csv(index=False, encoding="utf-8").encode("utf-8")
 
 
+def resolve_query_window(start_dt: datetime, end_dt: datetime, real_time_mode: bool, now_dt: datetime | None = None):
+    query_now = pd.Timestamp(now_dt or datetime.now(SINGAPORE_TZ))
+    if query_now.tzinfo is None:
+        query_now = query_now.tz_localize(SINGAPORE_TZ)
+    else:
+        query_now = query_now.tz_convert(SINGAPORE_TZ)
+
+    if real_time_mode:
+        return pd.Timestamp(start_dt).tz_convert(SINGAPORE_TZ).to_pydatetime(), query_now.to_pydatetime()
+    return pd.Timestamp(start_dt).tz_convert(SINGAPORE_TZ).to_pydatetime(), pd.Timestamp(end_dt).tz_convert(SINGAPORE_TZ).to_pydatetime()
+
+
 def build_refresh_script(interval_seconds: int | None) -> str:
     if interval_seconds is None:
         return """
@@ -119,7 +131,9 @@ def build_refresh_script(interval_seconds: int | None) -> str:
             clearInterval(window.__greenwall_data_viewer_timer);
         }}
         window.__greenwall_data_viewer_timer = setInterval(() => {{
-            window.location.reload();
+            if (document.visibilityState !== 'hidden') {{
+                window.location.reload();
+            }}
         }}, {interval_seconds * 1000});
         window.addEventListener('beforeunload', () => {{
             if (window.__greenwall_data_viewer_timer) {{
