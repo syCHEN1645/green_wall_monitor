@@ -23,6 +23,7 @@ from data_viewer_utils import (
     resolve_query_window,
     to_flux_time,
 )
+from theme_utils import apply_shared_theme, render_sidebar_company_name
 
 load_dotenv(dotenv_path=ROOT_DIR / ".env")
 
@@ -46,142 +47,9 @@ REFRESH_INTERVALS = {
     "30 minutes": 1800,
 }
 
-AMBIENT_STYLE = """
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"], .stApp {
-        background: linear-gradient(180deg, #edf4f8 0%, #f4f7fa 100%) !important;
-        color: #1f2d3d !important;
-        font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
-    }
-
-    .stApp {
-        font-size: 1.05rem !important;
-        line-height: 1.5 !important;
-    }
-
-    .stSidebar {
-        background: rgba(255,255,255,0.82) !important;
-        border-right: 1px solid rgba(15, 23, 42, 0.08) !important;
-        backdrop-filter: blur(8px);
-    }
-
-    .stSidebar > div {
-        padding-top: 1rem !important;
-    }
-
-    .stHeader, .stSubheader, .stMarkdown, .stTextInput, .stDateInput, .stTimeInput, .stSelectbox, .stMultiselect, .stCheckbox, .stRadio, .stButton button, .stDownloadButton button {
-        font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
-    }
-
-    .stSubheader, h1, h2, h3 {
-        color: #1d2a36 !important;
-        letter-spacing: -0.02em !important;
-    }
-
-    .stMarkdown p, .stMarkdown li, .stCaption, .stTextInput input, .stSelectbox div, .stMultiSelect div, .stNumberInput input, .stDateInput input {
-        font-size: 1.05rem !important;
-    }
-
-    div[data-testid="stVerticalBlock"] > div {
-        gap: 0.6rem !important;
-    }
-
-    [data-testid="stSidebar"] .stSelectbox > div, [data-testid="stSidebar"] .stDateInput > div, [data-testid="stSidebar"] .stCheckbox > label, [data-testid="stSidebar"] .stTextInput > div {
-        font-size: 1.05rem !important;
-    }
-
-    .stButton > button, .stDownloadButton > button {
-        background: linear-gradient(180deg, #2d6cdf 0%, #204fae 100%) !important;
-        border: 1px solid rgba(21, 55, 144, 0.25) !important;
-        border-radius: 10px !important;
-        color: #ffffff !important;
-        font-weight: 600 !important;
-        box-shadow: 0 3px 8px rgba(29, 78, 216, 0.18) !important;
-        padding: 0.7rem 1rem !important;
-        font-size: 1rem !important;
-    }
-
-    .stButton > button:hover, .stDownloadButton > button:hover {
-        filter: brightness(1.03);
-    }
-
-    .stDataFrame textarea, .stDataFrame table, .stDataFrame th, .stDataFrame td {
-        font-size: 1rem !important;
-    }
-
-    .stDataFrame table {
-        border-collapse: collapse !important;
-        border: 1px solid rgba(15, 23, 42, 0.18) !important;
-    }
-
-    .stDataFrame th {
-        background: #edf4ff !important;
-        color: #15365c !important;
-        font-weight: 700 !important;
-        border-bottom: 1px solid rgba(15, 23, 42, 0.2) !important;
-    }
-
-    .stDataFrame td {
-        color: #223245 !important;
-        border-bottom: 1px solid rgba(15, 23, 42, 0.1) !important;
-    }
-
-    .stDataFrame [data-testid="stHorizontalBlock"] {
-        background: transparent !important;
-    }
-
-    .plotly .svg-container {
-        background: rgba(255,255,255,0.9) !important;
-        border: 1px solid rgba(15, 23, 42, 0.08) !important;
-        border-radius: 12px !important;
-    }
-
-    .js-plotly-plot .plotly .modebar {
-        background: rgba(255,255,255,0.8) !important;
-    }
-
-    .stMetric {
-        background: rgba(255,255,255,0.7);
-        border: 1px solid rgba(15, 23, 42, 0.08);
-        border-radius: 12px;
-        padding: 0.75rem 1rem;
-    }
-
-    [data-testid="stFormSubmitButton"] > button {
-        border-radius: 8px !important;
-    }
-
-    .stAlert {
-        border-radius: 10px !important;
-    }
-
-    .stCheckbox label {
-        color: #243449 !important;
-    }
-
-    .stSelectbox [role="combobox"], .stTextInput input, .stDateInput input, .stTimeInput input {
-        border: 1px solid rgba(15, 23, 42, 0.16) !important;
-        border-radius: 8px !important;
-        background: rgba(255,255,255,0.9) !important;
-        color: #1f2d3d !important;
-    }
-
-    .stMultiSelect [role="combobox"] {
-        border: 1px solid rgba(15, 23, 42, 0.16) !important;
-        border-radius: 8px !important;
-        background: rgba(255,255,255,0.9) !important;
-    }
-
-    .stFileUploader {
-        border-radius: 10px !important;
-    }
-</style>
-"""
-
 st.set_page_config(page_title="Data Viewer", layout="wide")
-st.markdown(AMBIENT_STYLE, unsafe_allow_html=True)
+apply_shared_theme()
+render_sidebar_company_name()
 st.title("Data Viewer")
 st.caption("Historical readings and live monitoring for GreenWall sensor data")
 
@@ -291,8 +159,11 @@ with st.sidebar:
 
     if "realtime_start_dt" not in st.session_state:
         st.session_state["realtime_start_dt"] = datetime.combine(default_start.date(), default_start.time()).replace(tzinfo=SINGAPORE_TZ)
+    if "manual_end_dt" not in st.session_state:
+        st.session_state["manual_end_dt"] = now_dt
 
-    real_time_mode = st.checkbox("Real-time monitor", value=False)
+    real_time_mode = st.checkbox("Real-time monitor", value=st.session_state.get("real_time_mode", False))
+    st.session_state["real_time_mode"] = real_time_mode
 
     if real_time_mode:
         start_dt = st.session_state["realtime_start_dt"]
@@ -301,16 +172,18 @@ with st.sidebar:
         start_dt = datetime.combine(start_date, start_time).replace(tzinfo=SINGAPORE_TZ)
         st.session_state["realtime_start_dt"] = start_dt
         end_dt = datetime.now(SINGAPORE_TZ)
+        st.session_state["manual_end_dt"] = end_dt
         end_display = "Now"
     else:
         start_date = st.date_input("Start date", value=st.session_state["realtime_start_dt"].date())
         start_time = st.time_input("Start time", value=st.session_state["realtime_start_dt"].time())
         start_dt = datetime.combine(start_date, start_time).replace(tzinfo=SINGAPORE_TZ)
         st.session_state["realtime_start_dt"] = start_dt
-        default_end = now_dt
+        default_end = st.session_state["manual_end_dt"]
         end_date = st.date_input("End date", value=default_end.date())
         end_time = st.time_input("End time", value=default_end.time())
         end_dt = datetime.combine(end_date, end_time).replace(tzinfo=SINGAPORE_TZ)
+        st.session_state["manual_end_dt"] = end_dt
         end_display = end_dt.strftime("%Y-%m-%d %H:%M")
 
     st.caption(f"Current local time: {now_dt.strftime('%Y-%m-%d %H:%M:%S')} SGT")
@@ -341,6 +214,11 @@ st.caption("The time range is displayed in Singapore time, and the database time
 if not selected_entries:
     st.info("Select one or more entries from the sidebar to view historical data.")
     st.stop()
+
+if real_time_mode:
+    end_dt = datetime.now(SINGAPORE_TZ)
+    st.session_state["manual_end_dt"] = end_dt
+end_dt = end_dt if not real_time_mode else datetime.now(SINGAPORE_TZ)
 
 start_dt, end_dt = resolve_query_window(start_dt, end_dt, real_time_mode, datetime.now(SINGAPORE_TZ))
 
