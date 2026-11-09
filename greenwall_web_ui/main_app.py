@@ -10,14 +10,14 @@ st.markdown("---")
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("Sensor Calibration", text_alignment="center")    
-    if st.button("Sensor Calibration Page", type="secondary", icon="⚙️", use_container_width=True):
-        st.switch_page("pages/1_data_review_app.py")
+    st.subheader("Data Viewer", text_alignment="center")
+    if st.button("Data Viewer", type="secondary", icon="📊", use_container_width=True):
+        st.switch_page("pages/1_data_viewer_app.py")
 
 with col2:
-    st.subheader("Historical Data Review", text_alignment="center")
-    if st.button("Historical Data Page", type="secondary", icon="📊", use_container_width=True):
-        st.switch_page("pages/3_historical_data_app.py")
+    st.subheader("Sensor Calibration", text_alignment="center")
+    if st.button("Sensor Calibration Page", type="secondary", icon="⚙️", use_container_width=True):
+        st.switch_page("pages/2_sensor_calibration_app.py")
 
 st.divider()
 st.info("Use the sidebar navigation menu to jump between operations spaces at any time.")
