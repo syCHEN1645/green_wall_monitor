@@ -161,7 +161,11 @@ with st.sidebar:
     if "manual_end_dt" not in st.session_state:
         st.session_state["manual_end_dt"] = now_dt
 
-    real_time_mode = st.checkbox("Real-time monitor", value=st.session_state.get("real_time_mode", False))
+    real_time_mode = st.checkbox(
+        "Real-time monitor",
+        value=st.session_state.get("real_time_mode", False),
+        key="real_time_monitor_checkbox",
+    )
     st.session_state["real_time_mode"] = real_time_mode
 
     if real_time_mode:
@@ -194,6 +198,7 @@ with st.sidebar:
         options=refresh_options,
         index=1,
         disabled=not real_time_mode,
+        key="real_time_refresh_interval",
         help="Refresh interval used while Real-time monitor is enabled.",
     )
     refresh_interval_seconds = REFRESH_INTERVALS[refresh_interval_label]

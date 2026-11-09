@@ -261,6 +261,24 @@ LIGHT_THEME_CSS = """
         color: #2a2f36 !important;
     }
 
+    [data-testid="stSidebar"] .stAlert,
+    [data-testid="stSidebar"] .stInfo,
+    [data-testid="stSidebar"] .stSuccess,
+    [data-testid="stSidebar"] .stWarning,
+    [data-testid="stSidebar"] .stError {
+        background: rgba(243, 245, 247, 0.7) !important;
+        border: 1px solid rgba(133, 142, 155, 0.22) !important;
+        color: #a1a8b1 !important;
+    }
+
+    [data-testid="stSidebar"] .stAlert *,
+    [data-testid="stSidebar"] .stInfo *,
+    [data-testid="stSidebar"] .stSuccess *,
+    [data-testid="stSidebar"] .stWarning *,
+    [data-testid="stSidebar"] .stError * {
+        color: #a1a8b1 !important;
+    }
+
     /* Plot */
     .plotly .svg-container {
         background: rgba(255, 255, 255, 0.9) !important;
@@ -326,11 +344,3 @@ def render_topbar_company_name() -> None:
         ),
         unsafe_allow_html=True,
     )
-
-
-def render_sidebar_company_name() -> None:
-    with st.sidebar:
-        st.markdown(
-            f'<div class="sidebar-brand">{COMPANY_NAME}</div>',
-            unsafe_allow_html=True,
-        )
