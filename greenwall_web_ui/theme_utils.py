@@ -44,8 +44,10 @@ LIGHT_THEME_CSS = """
     [data-testid="stSidebar"] p,
     [data-testid="stSidebar"] small,
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
-    [data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
-        color: #2a2f36 !important;
+    [data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+    [data-testid="stSidebar"] .stCaption,
+    [data-testid="stSidebar"] .stCaption p {
+        color: #a1a8b1 !important;
     }
 
     /* Text inputs, date inputs, time inputs, number inputs, and text areas */

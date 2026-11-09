@@ -206,7 +206,10 @@ with st.sidebar:
     run_query = st.button("Query selected entries", type="primary", use_container_width=True)
 
     if real_time_mode:
-        st.info("Real-time mode keeps the selected start time fixed and advances the query end time to the current time on each refresh.")
+        st.caption(
+            "Real-time mode keeps the selected start time fixed and advances the query end time to the current time on each refresh.",
+            unsafe_allow_html=False,
+        )
     else:
         st.caption("Manual mode uses a fixed end time selected from the controls above.")
 
