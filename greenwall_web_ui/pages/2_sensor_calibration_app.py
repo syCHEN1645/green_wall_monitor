@@ -6,13 +6,13 @@ import threading
 import streamlit as st
 
 import config_utils
-from theme_utils import apply_shared_theme, render_sidebar_company_name
+from theme_utils import apply_shared_theme, render_topbar_company_name
 
 RECV_PORT = 5006
 
 st.set_page_config(page_title="Sensor Calibration", layout="wide")
 apply_shared_theme()
-render_sidebar_company_name()
+render_topbar_company_name()
 st.title("Sensor Calibration")
 
 # list of sensors that can be calibrated

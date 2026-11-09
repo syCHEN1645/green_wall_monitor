@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-SIDEBAR_COMPANY_NAME = "E&ST Environmental"
+COMPANY_NAME = "E&ST Environmental"
 
 LIGHT_THEME_CSS = """
 <style>
@@ -39,16 +39,29 @@ LIGHT_THEME_CSS = """
         padding-top: 0.5rem !important;
     }
 
-    .sidebar-brand {
-        display: block;
-        font-size: 1.2rem !important;
+    .topbar-brand-wrap {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: rgba(255,255,255,0.92);
+        backdrop-filter: blur(8px);
+        padding: 0.45rem 0 0.7rem 0;
+        margin: -0.5rem 0 0.75rem 0;
+        border-bottom: 1px solid rgba(42,47,54,0.12);
+    }
+
+    .topbar-brand {
+        display: inline-block;
+        font-size: 1.25rem !important;
         font-weight: 800 !important;
         letter-spacing: 0.02em !important;
         color: #2a2f36 !important;
-        padding: 0.3rem 0.6rem 0.7rem 0.6rem !important;
-        border-bottom: 1px solid rgba(42,47,54,0.12);
-        margin-bottom: 0.5rem;
+        padding: 0.25rem 0.5rem 0.35rem 0.1rem !important;
         white-space: nowrap;
+    }
+
+    .sidebar-brand {
+        display: none !important;
     }
 
     h1, h2, h3, .stSubheader, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
@@ -174,6 +187,13 @@ def apply_shared_theme() -> None:
     st.markdown(LIGHT_THEME_CSS, unsafe_allow_html=True)
 
 
+def render_topbar_company_name() -> None:
+    st.markdown(
+        f'<div class="topbar-brand-wrap"><div class="topbar-brand">{COMPANY_NAME}</div></div>',
+        unsafe_allow_html=True,
+    )
+
+
 def render_sidebar_company_name() -> None:
     with st.sidebar:
-        st.markdown(f'<div class="sidebar-brand">{SIDEBAR_COMPANY_NAME}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="sidebar-brand">{COMPANY_NAME}</div>', unsafe_allow_html=True)

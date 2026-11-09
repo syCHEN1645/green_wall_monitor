@@ -103,43 +103,46 @@ def resolve_query_window(start_dt: datetime, end_dt: datetime, real_time_mode: b
     else:
         query_now = query_now.tz_convert(SINGAPORE_TZ)
 
+    normalized_start = pd.Timestamp(start_dt).tz_convert(SINGAPORE_TZ).to_pydatetime()
     if real_time_mode:
-        return pd.Timestamp(start_dt).tz_convert(SINGAPORE_TZ).to_pydatetime(), query_now.to_pydatetime()
-    return pd.Timestamp(start_dt).tz_convert(SINGAPORE_TZ).to_pydatetime(), pd.Timestamp(end_dt).tz_convert(SINGAPORE_TZ).to_pydatetime()
+        return normalized_start, query_now.to_pydatetime()
+    return normalized_start, pd.Timestamp(end_dt).tz_convert(SINGAPORE_TZ).to_pydatetime()
 
 
 def build_refresh_script(interval_seconds: int | None) -> str:
     if interval_seconds is None:
         return """
         <script>
-            if (window.__greenwall_data_viewer_timer) {
-                clearInterval(window.__greenwall_data_viewer_timer);
-                window.__greenwall_data_viewer_timer = null;
-            }
-            window.addEventListener('beforeunload', () => {
-                if (window.__greenwall_data_viewer_timer) {
-                    clearInterval(window.__greenwall_data_viewer_timer);
-                    window.__greenwall_data_viewer_timer = null;
-                }
-            });
+            (() => {
+                const cleanup = () => {
+                    if (window.__greenwall_data_viewer_timer) {
+                        clearInterval(window.__greenwall_data_viewer_timer);
+                        window.__greenwall_data_viewer_timer = null;
+                    }
+                };
+                cleanup();
+                window.addEventListener('beforeunload', cleanup, { once: true });
+            })();
         </script>
         """
 
     return f"""
     <script>
-        if (window.__greenwall_data_viewer_timer) {{
-            clearInterval(window.__greenwall_data_viewer_timer);
-        }}
-        window.__greenwall_data_viewer_timer = setInterval(() => {{
-            if (document.visibilityState !== 'hidden') {{
-                window.location.reload();
-            }}
-        }}, {interval_seconds * 1000});
-        window.addEventListener('beforeunload', () => {{
-            if (window.__greenwall_data_viewer_timer) {{
-                clearInterval(window.__greenwall_data_viewer_timer);
-                window.__greenwall_data_viewer_timer = null;
-            }}
-        }});
+        (() => {{
+            const cleanup = () => {{
+                if (window.__greenwall_data_viewer_timer) {{
+                    clearInterval(window.__greenwall_data_viewer_timer);
+                    window.__greenwall_data_viewer_timer = null;
+                }}
+            }};
+
+            cleanup();
+            window.__greenwall_data_viewer_timer = setInterval(() => {{
+                if (document.visibilityState !== 'hidden') {{
+                    window.location.reload();
+                }}
+            }}, {interval_seconds * 1000});
+            window.addEventListener('beforeunload', cleanup, {{ once: true }});
+        }})();
     </script>
     """

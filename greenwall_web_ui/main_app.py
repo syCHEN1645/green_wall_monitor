@@ -1,11 +1,11 @@
 import streamlit as st
 
-from theme_utils import apply_shared_theme, render_sidebar_company_name
+from theme_utils import apply_shared_theme, render_topbar_company_name
 
 # Configure page parameters (Must be the first Streamlit command executed)
 st.set_page_config(page_title="Main Menu", layout="wide")
 apply_shared_theme()
-render_sidebar_company_name()
+render_topbar_company_name()
 
 st.title("Main Menu")
 st.markdown("---")

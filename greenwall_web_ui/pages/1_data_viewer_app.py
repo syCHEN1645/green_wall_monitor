@@ -8,6 +8,7 @@ import plotly.express as px
 import streamlit as st
 from dotenv import load_dotenv
 from influxdb_client.client.influxdb_client import InfluxDBClient
+from streamlit_autorefresh import st_autorefresh
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
@@ -15,7 +16,6 @@ if str(ROOT_DIR) not in sys.path:
 
 from data_viewer_utils import (
     SINGAPORE_TZ,
-    build_refresh_script,
     build_wide_frame,
     export_csv_bytes,
     format_singapore_timestamp,
@@ -23,7 +23,7 @@ from data_viewer_utils import (
     resolve_query_window,
     to_flux_time,
 )
-from theme_utils import apply_shared_theme, render_sidebar_company_name
+from theme_utils import apply_shared_theme, render_topbar_company_name
 
 load_dotenv(dotenv_path=ROOT_DIR / ".env")
 
@@ -49,7 +49,7 @@ REFRESH_INTERVALS = {
 
 st.set_page_config(page_title="Data Viewer", layout="wide")
 apply_shared_theme()
-render_sidebar_company_name()
+render_topbar_company_name()
 st.title("Data Viewer")
 st.caption("Historical readings and live monitoring for GreenWall sensor data")
 
@@ -216,9 +216,12 @@ if not selected_entries:
     st.stop()
 
 if real_time_mode:
-    end_dt = datetime.now(SINGAPORE_TZ)
+    now_dt = datetime.now(SINGAPORE_TZ)
+    end_dt = now_dt
     st.session_state["manual_end_dt"] = end_dt
-end_dt = end_dt if not real_time_mode else datetime.now(SINGAPORE_TZ)
+    st.session_state["realtime_end_dt"] = end_dt
+else:
+    end_dt = st.session_state.get("manual_end_dt", end_dt)
 
 start_dt, end_dt = resolve_query_window(start_dt, end_dt, real_time_mode, datetime.now(SINGAPORE_TZ))
 
@@ -291,6 +294,9 @@ fig.update_traces(mode="lines+markers", marker={"size": 7}, line={"width": 2.5})
 st.plotly_chart(fig, use_container_width=True)
 
 if real_time_mode:
-    st.components.v1.html(build_refresh_script(refresh_interval_seconds), height=0)
-else:
-    st.components.v1.html(build_refresh_script(None), height=0)
+    # Streamlit-native rerun: this reruns the complete Python script at the
+    # selected interval, allowing the query end time to be recalculated.
+    st_autorefresh(
+        interval=refresh_interval_seconds * 1000,
+        key="data_viewer_realtime_refresh",
+    )
