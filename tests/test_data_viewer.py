@@ -9,10 +9,10 @@ sys.path.insert(0, str(REPO_ROOT / "greenwall_web_ui"))
 
 from data_viewer_utils import (
     SINGAPORE_TZ,
-    build_refresh_script,
     build_wide_frame,
     export_csv_bytes,
     resolve_query_window,
+    should_auto_refresh,
     to_singapore_time,
 )
 
@@ -49,11 +49,17 @@ def test_export_csv_bytes_uses_singapore_display_format():
     assert b"sensor-a/temp" in payload
 
 
-def test_build_refresh_script_uses_single_timer_and_reload():
-    script = build_refresh_script(30)
-    assert "clearInterval(window.__greenwall_data_viewer_timer)" in script
-    assert "setInterval" in script
-    assert "window.location.reload()" in script
+def test_should_auto_refresh_obeys_interval():
+    now_dt = datetime(2026, 11, 8, 21, 0, tzinfo=SINGAPORE_TZ)
+    last_refresh = datetime(2026, 11, 8, 20, 59, 40, tzinfo=SINGAPORE_TZ)
+
+    assert should_auto_refresh(last_refresh, 30, now_dt) is False
+    assert should_auto_refresh(last_refresh, 20, now_dt) is True
+
+
+def test_should_auto_refresh_runs_when_no_last_refresh():
+    now_dt = datetime(2026, 11, 8, 21, 0, tzinfo=SINGAPORE_TZ)
+    assert should_auto_refresh(None, 30, now_dt) is True
 
 
 def test_resolve_query_window_uses_current_time_in_real_time_mode():
